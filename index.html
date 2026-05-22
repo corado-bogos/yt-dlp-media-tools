@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>yt-dlp-media-tools</title>
+  <meta name="description" content="A beginner-friendly terminal downloader for videos, audio, and playlists, powered by yt-dlp. Supports MP4, WEBM, MP3, M4A, FLAC. Works on macOS and Linux." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0d0f0e; --bg2:#141614; --bg3:#1c1f1c; --border:#2a2d2a;
+      --accent:#e05a1e; --accent2:#ff7a3d; --green:#3ddc84;
+      --text:#e8e6e0; --muted:#7a7d76;
+      --mono:'JetBrains Mono',monospace; --sans:'Syne',sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body { background:var(--bg); color:var(--text); font-family:var(--sans); font-size:16px; line-height:1.6; overflow-x:hidden; }
+    body::before { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px); pointer-events:none; z-index:1000; }
+
+    nav { position:fixed; top:0; left:0; right:0; z-index:100; background:rgba(13,15,14,0.88); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:0 2rem; height:56px; display:flex; align-items:center; justify-content:space-between; }
+    .nav-logo { font-family:var(--mono); font-size:14px; color:var(--accent); letter-spacing:0.05em; }
+    .nav-logo span { color:var(--muted); }
+    nav ul { list-style:none; display:flex; gap:1.5rem; }
+    nav a { font-family:var(--mono); font-size:12px; color:var(--muted); text-decoration:none; letter-spacing:0.08em; text-transform:uppercase; transition:color 0.2s; }
+    nav a:hover { color:var(--accent2); }
+    .nav-gh { font-family:var(--mono); font-size:12px; color:var(--bg); background:var(--accent); padding:6px 14px; border-radius:3px; text-decoration:none; font-weight:700; transition:background 0.2s; }
+    .nav-gh:hover { background:var(--accent2); }
+
+    .hero { min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:7rem 2rem 4rem; max-width:960px; margin:0 auto; }
+    .hero-tag { font-family:var(--mono); font-size:12px; color:var(--accent); letter-spacing:0.15em; text-transform:uppercase; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.5rem; }
+    .hero-tag::before { content:''; display:inline-block; width:20px; height:1px; background:var(--accent); }
+    h1 { font-size:clamp(3rem,8vw,6.5rem); font-weight:800; line-height:0.9; letter-spacing:-0.03em; margin-bottom:1.5rem; }
+    h1 .yt { color:var(--accent); }
+    .hero-desc { font-size:1.05rem; color:var(--muted); max-width:520px; margin-bottom:2.5rem; line-height:1.7; }
+    .badges { display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:2.5rem; }
+    .badge { font-family:var(--mono); font-size:11px; padding:4px 10px; border:1px solid var(--border); border-radius:3px; color:var(--muted); letter-spacing:0.05em; }
+    .badge.hi { border-color:var(--accent); color:var(--accent); }
+    .hero-cta { display:flex; gap:1rem; flex-wrap:wrap; }
+    .btn-primary { font-family:var(--mono); font-size:13px; font-weight:700; color:var(--bg); background:var(--accent); padding:12px 28px; border-radius:3px; text-decoration:none; transition:background 0.2s,transform 0.1s; }
+    .btn-primary:hover { background:var(--accent2); transform:translateY(-1px); }
+    .btn-secondary { font-family:var(--mono); font-size:13px; color:var(--text); border:1px solid var(--border); padding:12px 28px; border-radius:3px; text-decoration:none; transition:border-color 0.2s,color 0.2s; }
+    .btn-secondary:hover { border-color:var(--accent); color:var(--accent); }
+
+    .hero-terminal { margin-top:4rem; background:var(--bg2); border:1px solid var(--border); border-radius:6px; overflow:hidden; max-width:600px; }
+    .term-bar { background:var(--bg3); padding:10px 14px; display:flex; align-items:center; gap:6px; border-bottom:1px solid var(--border); }
+    .dot { width:10px; height:10px; border-radius:50%; }
+    .dot.r{background:#e05a1e;} .dot.y{background:#d4a017;} .dot.g{background:#3ddc84;}
+    .term-title { font-family:var(--mono); font-size:11px; color:var(--muted); margin-left:8px; }
+    .term-body { padding:1.25rem 1.5rem; font-family:var(--mono); font-size:13px; line-height:2.1; }
+    .tp { color:var(--green); }
+    .to { color:var(--muted); padding-left:1.2rem; display:block; }
+    .th { color:var(--accent2); }
+    .tok { color:var(--green); }
+    .term-cursor { display:inline-block; width:8px; height:14px; background:var(--accent); vertical-align:middle; animation:blink 1.1s step-end infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    section { padding:5rem 2rem; max-width:960px; margin:0 auto; }
+    .divider { width:100%; height:1px; background:var(--border); }
+    .section-label { font-family:var(--mono); font-size:11px; color:var(--accent); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:0.75rem; }
+    h2 { font-size:clamp(1.8rem,4vw,2.8rem); font-weight:800; letter-spacing:-0.02em; margin-bottom:1rem; line-height:1.1; }
+
+    .features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1px; border:1px solid var(--border); border-radius:6px; overflow:hidden; margin-top:3rem; }
+    .fc { background:var(--bg2); padding:1.75rem; transition:background 0.2s; }
+    .fc:hover { background:var(--bg3); }
+    .fi { font-size:1.3rem; margin-bottom:0.75rem; }
+    .ft { font-weight:600; font-size:0.95rem; margin-bottom:0.4rem; }
+    .fd { font-size:0.83rem; color:var(--muted); line-height:1.5; font-family:var(--mono); }
+
+    .formats-table { margin-top:3rem; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+    .fmt-row { display:grid; grid-template-columns:80px 80px 1fr 160px; align-items:center; gap:1rem; padding:1rem 1.25rem; border-bottom:1px solid var(--border); transition:background 0.15s; }
+    .fmt-row:last-child { border-bottom:none; }
+    .fmt-row:hover { background:var(--bg2); }
+    .fmt-row.hdr { background:var(--bg3); }
+    .fl { font-family:var(--mono); font-size:16px; font-weight:700; color:var(--accent2); }
+    .ftb { display:inline-block; font-family:var(--mono); font-size:10px; padding:2px 8px; border-radius:2px; }
+    .tv { background:rgba(224,90,30,0.15); color:var(--accent2); }
+    .ta { background:rgba(61,220,132,0.12); color:var(--green); }
+    .fdesc { font-size:0.85rem; color:var(--muted); }
+    .fth { font-family:var(--mono); font-size:11px; }
+    .fth.ok{color:var(--green);} .fth.warn{color:#d4a017;} .fth.no{color:var(--muted);opacity:0.5;}
+    .fhc { font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; }
+
+    .install-tabs { display:flex; margin-top:2.5rem; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+    .tab-btn { font-family:var(--mono); font-size:12px; padding:10px 24px; background:var(--bg2); color:var(--muted); border:none; border-right:1px solid var(--border); cursor:pointer; letter-spacing:0.08em; text-transform:uppercase; transition:all 0.2s; }
+    .tab-btn:last-child { border-right:none; }
+    .tab-btn.active { background:var(--bg3); color:var(--accent); }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+
+    .steps { display:flex; flex-direction:column; gap:1.5rem; margin-top:2rem; }
+    .step { display:grid; grid-template-columns:44px 1fr; gap:1.25rem; align-items:start; }
+    .sn { width:44px; height:44px; border:1px solid var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:13px; color:var(--accent); flex-shrink:0; margin-top:2px; }
+    .sc h3 { font-size:0.95rem; font-weight:600; margin-bottom:0.4rem; }
+    .sc p { font-size:0.83rem; color:var(--muted); margin-bottom:0.5rem; font-family:var(--mono); }
+    .cb { background:var(--bg2); border:1px solid var(--border); border-radius:4px; padding:0.7rem 1rem; font-family:var(--mono); font-size:12px; color:var(--green); display:flex; align-items:center; justify-content:space-between; gap:0.75rem; margin-bottom:0.5rem; overflow-x:auto; }
+    .ps { color:var(--accent); margin-right:4px; }
+    .cpbtn { background:none; border:1px solid var(--border); color:var(--muted); font-family:var(--mono); font-size:10px; padding:3px 8px; border-radius:3px; cursor:pointer; letter-spacing:0.05em; transition:all 0.2s; flex-shrink:0; }
+    .cpbtn:hover { border-color:var(--accent); color:var(--accent); }
+
+    .how-steps { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1px; border:1px solid var(--border); border-radius:6px; overflow:hidden; margin-top:3rem; }
+    .hs { background:var(--bg2); padding:2rem 1.5rem; }
+    .hsn { font-family:var(--mono); font-size:38px; font-weight:700; color:var(--border); line-height:1; margin-bottom:1rem; }
+    .hst { font-weight:600; font-size:0.95rem; margin-bottom:0.4rem; color:var(--accent2); }
+    .hsd { font-size:0.83rem; color:var(--muted); line-height:1.5; }
+    .hse { margin-top:0.75rem; font-family:var(--mono); font-size:11px; color:var(--green); background:var(--bg3); padding:8px 10px; border-radius:3px; line-height:1.8; }
+
+    .output-demo { margin-top:2.5rem; background:var(--bg2); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+    .obar { background:var(--bg3); padding:10px 14px; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:11px; color:var(--muted); }
+    .obody { padding:1.25rem 1.5rem; font-family:var(--mono); font-size:13px; line-height:2; }
+
+    .support-links { margin-top:2rem; display:flex; flex-direction:column; gap:1px; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+    .si { background:var(--bg2); padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; transition:background 0.2s; }
+    .si:hover { background:var(--bg3); }
+    .sl { font-size:0.9rem; }
+    .sa { font-family:var(--mono); font-size:11px; color:var(--accent); text-decoration:none; }
+    .sa:hover { color:var(--accent2); }
+
+    footer { border-top:1px solid var(--border); padding:3rem 2rem; max-width:960px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; }
+    .footer-logo { font-family:var(--mono); font-size:13px; color:var(--accent); }
+    .footer-links { display:flex; gap:1.5rem; flex-wrap:wrap; }
+    .footer-links a { font-family:var(--mono); font-size:11px; color:var(--muted); text-decoration:none; letter-spacing:0.08em; text-transform:uppercase; transition:color 0.2s; }
+    .footer-links a:hover { color:var(--accent); }
+    .footer-copy { font-family:var(--mono); font-size:11px; color:var(--muted); }
+
+    .reveal { opacity:0; transform:translateY(20px); transition:opacity 0.5s ease,transform 0.5s ease; }
+    .reveal.visible { opacity:1; transform:none; }
+    .note { font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:1rem; }
+    .note .ni { color:var(--accent); }
+
+    @media(max-width:640px){
+      nav ul { display:none; }
+      .fmt-row { grid-template-columns:70px 70px 1fr; }
+      .fth { display:none; }
+      footer { flex-direction:column; text-align:center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><span>~/</span>yt-dlp-media-tools</div>
+  <ul>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#formats">Formats</a></li>
+    <li><a href="#install">Install</a></li>
+    <li><a href="#usage">Usage</a></li>
+  </ul>
+  <a class="nav-gh" href="https://github.com/corado-bogos/yt-dlp-media-tools" target="_blank">GitHub →</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">v1.0.0 · Shell Script · macOS &amp; Linux</div>
+  <h1><span class="yt">yt-dlp</span><br><span>media-tools</span></h1>
+  <p class="hero-desc">A beginner-friendly terminal downloader for videos, audio, and playlists — powered by yt-dlp. No commands to memorize.</p>
+  <div class="badges">
+    <span class="badge hi">shell · bash</span>
+    <span class="badge">macOS &amp; Linux</span>
+    <span class="badge">v1.0.0</span>
+    <span class="badge">Personal Use</span>
+  </div>
+  <div class="hero-cta">
+    <a class="btn-primary" href="#install">Get Started</a>
+    <a class="btn-secondary" href="https://github.com/corado-bogos/yt-dlp-media-tools" target="_blank">View on GitHub</a>
+  </div>
+  <div class="hero-terminal">
+    <div class="term-bar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <span class="term-title">bash — yt-dlp-media-tools.sh</span>
+    </div>
+    <div class="term-body">
+      <div><span class="tp">$</span> ./yt-dlp-media-tools.sh</div>
+      <span class="to">Save folder [~/Desktop]: <span class="th">~/Music</span></span>
+      <span class="to">URL: <span class="th">https://youtube.com/playlist?list=...</span></span>
+      <span class="to">Format: <span class="th">3) MP3</span></span>
+      <span class="to">Browser cookies: <span class="th">1) Chrome</span></span>
+      <span class="to tok">✔  001 - Artist - Song Title.mp3</span>
+      <span class="to tok">✔  002 - Artist - Song Title.mp3</span>
+      <div><span class="tp">$</span> <span class="term-cursor"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="reveal">
+    <div class="section-label">// features</div>
+    <h2>Everything you need.<br>Nothing you don't.</h2>
+  </div>
+  <div class="features-grid reveal">
+    <div class="fc"><div class="fi">💬</div><div class="ft">Interactive step-by-step</div><div class="fd">No commands to memorize — just answer the prompts</div></div>
+    <div class="fc"><div class="fi">🎛️</div><div class="ft">5 download formats</div><div class="fd">MP4 · WEBM · MP3 · M4A · FLAC</div></div>
+    <div class="fc"><div class="fi">🌐</div><div class="ft">Browser cookies</div><div class="fd">Chrome · Firefox · Safari · Edge · Brave — or skip</div></div>
+    <div class="fc"><div class="fi">🏷️</div><div class="ft">Auto naming</div><div class="fd">Files saved as index + artist + title automatically</div></div>
+    <div class="fc"><div class="fi">⏭️</div><div class="ft">Archive tracking</div><div class="fd">Skips already-downloaded files on repeat runs</div></div>
+    <div class="fc"><div class="fi">🔧</div><div class="ft">Auto installer</div><div class="fd">Detects OS, installs yt-dlp &amp; ffmpeg — brew, apt, dnf, pacman, zypper</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FORMATS -->
+<section id="formats">
+  <div class="reveal">
+    <div class="section-label">// formats</div>
+    <h2>Pick your format.</h2>
+  </div>
+  <div class="formats-table reveal">
+    <div class="fmt-row hdr">
+      <div class="fhc">Format</div><div class="fhc">Type</div><div class="fhc">Best for</div><div class="fhc">Thumbnail</div>
+    </div>
+    <div class="fmt-row">
+      <div class="fl">MP4</div><div><span class="ftb tv">Video</span></div>
+      <div class="fdesc">Most video players — best quality</div>
+      <div class="fth ok">Embedded</div>
+    </div>
+    <div class="fmt-row">
+      <div class="fl">WEBM</div><div><span class="ftb tv">Video</span></div>
+      <div class="fdesc">Native YouTube quality, no re-encoding</div>
+      <div class="fth warn">Saved as JPG</div>
+    </div>
+    <div class="fmt-row">
+      <div class="fl">MP3</div><div><span class="ftb ta">Audio</span></div>
+      <div class="fdesc">Cars, phones, speakers — universal</div>
+      <div class="fth ok">Embedded</div>
+    </div>
+    <div class="fmt-row">
+      <div class="fl">M4A</div><div><span class="ftb ta">Audio</span></div>
+      <div class="fdesc">Good quality, smaller file size</div>
+      <div class="fth ok">Embedded</div>
+    </div>
+    <div class="fmt-row">
+      <div class="fl">FLAC</div><div><span class="ftb ta">Audio</span></div>
+      <div class="fdesc">Lossless conversion from source</div>
+      <div class="fth no">No thumbnail</div>
+    </div>
+  </div>
+  <p class="note"><span class="ni">!</span> FLAC is lossless, but cannot improve quality beyond the original source.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- INSTALL -->
+<section id="install">
+  <div class="reveal">
+    <div class="section-label">// installation</div>
+    <h2>Up and running<br>in minutes.</h2>
+  </div>
+  <div class="install-tabs reveal">
+    <button class="tab-btn active" onclick="switchTab(event,'mac')">macOS</button>
+    <button class="tab-btn" onclick="switchTab(event,'linux')">Linux</button>
+  </div>
+
+  <div id="tab-mac" class="tab-content active reveal">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">01</div>
+        <div class="sc">
+          <h3>Install Homebrew</h3>
+          <div class="cb"><span><span class="ps">$</span>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</span><button class="cpbtn" onclick="cp(this,'/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&quot;')">COPY</button></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="sn">02</div>
+        <div class="sc">
+          <h3>Add Homebrew to Terminal</h3>
+          <div class="cb"><span><span class="ps">$</span>echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile</span><button class="cpbtn" onclick="cp(this,'echo &apos;eval &quot;$(/opt/homebrew/bin/brew shellenv)&quot;&apos; >> ~/.zprofile')">COPY</button></div>
+          <div class="cb"><span><span class="ps">$</span>eval "$(/opt/homebrew/bin/brew shellenv)"</span><button class="cpbtn" onclick="cp(this,'eval &quot;$(/opt/homebrew/bin/brew shellenv)&quot;')">COPY</button></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="sn">03</div>
+        <div class="sc">
+          <h3>Install Git</h3>
+          <div class="cb"><span><span class="ps">$</span>brew install git</span><button class="cpbtn" onclick="cp(this,'brew install git')">COPY</button></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="sn">04</div>
+        <div class="sc">
+          <h3>Clone and install</h3>
+          <div class="cb"><span><span class="ps">$</span>git clone https://github.com/corado-bogos/yt-dlp-media-tools</span><button class="cpbtn" onclick="cp(this,'git clone https://github.com/corado-bogos/yt-dlp-media-tools')">COPY</button></div>
+          <div class="cb"><span><span class="ps">$</span>cd yt-dlp-media-tools</span><button class="cpbtn" onclick="cp(this,'cd yt-dlp-media-tools')">COPY</button></div>
+          <div class="cb"><span><span class="ps">$</span>chmod +x install.sh &amp;&amp; ./install.sh</span><button class="cpbtn" onclick="cp(this,'chmod +x install.sh && ./install.sh')">COPY</button></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="sn">05</div>
+        <div class="sc">
+          <h3>Start the tool</h3>
+          <p>Every time you want to run the program, open the folder first, then start it:</p>
+          <div class="cb"><span><span class="ps">$</span>cd yt-dlp-media-tools</span><button class="cpbtn" onclick="cp(this,'cd yt-dlp-media-tools')">COPY</button></div>
+          <div class="cb"><span><span class="ps">$</span>./yt-dlp-media-tools.sh</span><button class="cpbtn" onclick="cp(this,'./yt-dlp-media-tools.sh')">COPY</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-linux" class="tab-content reveal">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">01</div>
+        <div class="sc">
+          <h3>Install Git</h3>
+          <p>Debian / Ubuntu:</p>
+          <div class="cb"><span><span class="ps">$</span>sudo apt update &amp;&amp; sudo apt install git</span><button class="cpbtn" onclick="cp(this,'sudo apt update && sudo apt install git')">COPY</button></div>
+          <p>Fedora:</p>
+          <div class="cb"><span><span class="ps">$</span>sudo dnf install git</span><button class="cpbtn" onclick="cp(this,'sudo dnf install git')">COPY</button></div>
+          <p>Arch:</p>
+          <div class="cb"><span><span class="ps">$</span>sudo pacman -S git</span><button class="cpbtn" onclick="cp(this,'sudo pacman -S git')">COPY</button></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="sn">02</div>
+        <div class="sc">
+          <h3>Clone and install</h3>
+          <div class="cb"><span><span class="ps">$</span>git clone https://github.com/corado-bogos/yt-dlp-media-tools</span><button class="cpbtn" onclick="cp(this,'git clone https://github.com/corado-bogos/yt-dlp-media-tools')">COPY</button></div>
+          <div class="cb"><span><span class="ps">$</span>cd yt-dlp-media-tools</span><button class="cpbtn" onclick="cp(this,'cd yt-dlp-media-tools')">COPY</button></div>
+          <div class="cb"><span><span class="ps">$</span>chmod +x install.sh &amp;&amp; ./install.sh</span><button class="cpbtn" onclick="cp(this,'chmod +x install.sh && ./install.sh')">COPY</button></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="sn">03</div>
+        <div class="sc">
+          <h3>Start the tool</h3>
+          <p>Every time you want to run the program, open the folder first, then start it:</p>
+          <div class="cb"><span><span class="ps">$</span>cd yt-dlp-media-tools</span><button class="cpbtn" onclick="cp(this,'cd yt-dlp-media-tools')">COPY</button></div>
+          <div class="cb"><span><span class="ps">$</span>./yt-dlp-media-tools.sh</span><button class="cpbtn" onclick="cp(this,'./yt-dlp-media-tools.sh')">COPY</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- USAGE -->
+<section id="usage">
+  <div class="reveal">
+    <div class="section-label">// usage</div>
+    <h2>Four steps.<br>Done.</h2>
+  </div>
+  <div class="how-steps reveal">
+    <div class="hs">
+      <div class="hsn">01</div>
+      <div class="hst">Save folder</div>
+      <div class="hsd">Default is ~/Desktop. Press Enter to use it, or paste any existing folder path.</div>
+      <div class="hse">~/Desktop (default)<br>~/Music<br>~/Downloads</div>
+    </div>
+    <div class="hs" style="border-left:1px solid var(--border)">
+      <div class="hsn">02</div>
+      <div class="hst">Paste URL</div>
+      <div class="hsd">Single video or full playlist. Must start with http:// or https://</div>
+      <div class="hse">https://youtube.com/watch?v=...<br>https://youtube.com/playlist?...</div>
+    </div>
+    <div class="hs" style="border-left:1px solid var(--border)">
+      <div class="hsn">03</div>
+      <div class="hst">Choose format</div>
+      <div class="hsd">Pick from 5 formats — video or audio.</div>
+      <div class="hse">1) MP4 &nbsp; 2) WEBM<br>3) MP3 &nbsp; 4) M4A &nbsp; 5) FLAC</div>
+    </div>
+    <div class="hs" style="border-left:1px solid var(--border)">
+      <div class="hsn">04</div>
+      <div class="hst">Browser cookies</div>
+      <div class="hsd">Optional — helps with restricted content, large playlists, rate limits.</div>
+      <div class="hse">0) Skip &nbsp; 1) Chrome<br>2) Firefox &nbsp; 3) Safari<br>4) Edge &nbsp; 5) Brave</div>
+    </div>
+  </div>
+
+  <div class="output-demo reveal">
+    <div class="obar">~/Music — output structure</div>
+    <div class="obody">
+      <div style="color:var(--accent2)">Music/</div>
+      <div><span style="color:var(--border)"> |-- </span><span style="color:var(--accent)">001</span> - Artist - Song Title.mp3</div>
+      <div><span style="color:var(--border)"> |-- </span><span style="color:var(--accent)">002</span> - Artist - Song Title.mp3</div>
+      <div><span style="color:var(--border)"> |-- </span><span style="color:var(--accent)">003</span> - Artist - Song Title.mp3</div>
+      <div><span style="color:var(--border)"> `-- </span><span style="color:var(--muted);font-size:11px">archive.txt &nbsp;← tracks downloaded items, skips duplicates</span></div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:1rem"><span class="ni">!</span> Type <span style="color:var(--green)">back</span> at any prompt to return to the previous step. Type <span style="color:var(--green)">exit</span> to close the program.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- SUPPORT -->
+<section id="support">
+  <div class="reveal">
+    <div class="section-label">// support</div>
+    <h2>Need help?</h2>
+  </div>
+  <div class="support-links reveal">
+    <div class="si">
+      <div class="sl">Bug reports &amp; questions</div>
+      <a class="sa" href="https://github.com/corado-bogos/yt-dlp-media-tools/issues" target="_blank">Open an issue →</a>
+    </div>
+    <div class="si">
+      <div class="sl">Common fixes &amp; troubleshooting</div>
+      <a class="sa" href="https://github.com/corado-bogos/yt-dlp-media-tools/blob/main/TROUBLESHOOTING.md" target="_blank">TROUBLESHOOTING.md →</a>
+    </div>
+    <div class="si">
+      <div class="sl">Private contact</div>
+      <a class="sa" href="mailto:corado.dev@icloud.com">corado.dev@icloud.com →</a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<footer>
+  <div class="footer-logo">yt-dlp-media-tools v1.0.0</div>
+  <div class="footer-links">
+    <a href="https://github.com/corado-bogos/yt-dlp-media-tools" target="_blank">GitHub</a>
+    <a href="https://github.com/corado-bogos/yt-dlp-media-tools/blob/main/LICENSE.md" target="_blank">License</a>
+    <a href="https://github.com/corado-bogos/yt-dlp-media-tools/blob/main/CONTRIBUTING.md" target="_blank">Contributing</a>
+    <a href="https://github.com/corado-bogos/yt-dlp-media-tools/blob/main/CHANGELOG.md" target="_blank">Changelog</a>
+    <a href="https://github.com/corado-bogos/yt-dlp-media-tools/blob/main/TROUBLESHOOTING.md" target="_blank">Troubleshooting</a>
+  </div>
+  <div class="footer-copy">Personal &amp; Educational Use Only</div>
+</footer>
+
+<script>
+  function switchTab(e, id) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    e.target.classList.add('active');
+  }
+  function cp(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'COPIED!';
+      btn.style.color = '#3ddc84';
+      btn.style.borderColor = '#3ddc84';
+      setTimeout(() => { btn.textContent = 'COPY'; btn.style.color = ''; btn.style.borderColor = ''; }, 1800);
+    });
+  }
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
