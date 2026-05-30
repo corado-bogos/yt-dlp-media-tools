@@ -1,5 +1,5 @@
 # yt-dlp-media-tools
-Live site: https://yt-dlp-media-tools.netlify.app/
+Live site: https://yt-dlp-media-tools.com
 
 A beginner-friendly terminal downloader for videos, audio, and playlists, powered by `yt-dlp`.
 
