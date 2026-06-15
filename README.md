@@ -1,297 +1,284 @@
-# yt-dlp-media-tools
-Live site: https://yt-dlp-media-tools.com
+[README.md](https://github.com/user-attachments/files/28959666/README.md)
+# 🎬 yt-dlp-media-tools
 
-A beginner-friendly terminal downloader for videos, audio, and playlists, powered by `yt-dlp`.
+> A beginner-friendly terminal tool for downloading videos, audio, and playlists from YouTube and other platforms.
 
-![Shell](https://img.shields.io/badge/shell-bash-blue)
-![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)
-![Version](https://img.shields.io/badge/version-v1.0.0-green)
+![Shell](https://img.shields.io/badge/shell-bash-blue) ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey) ![License](https://img.shields.io/badge/license-Personal%20Use-green) ![Version](https://img.shields.io/badge/version-1.1.0-orange)
 
-## What It Does
+---
 
-`yt-dlp-media-tools` gives you a simple step-by-step terminal interface for downloading media without memorizing long `yt-dlp` commands.
+## 📌 Overview
 
-It can download:
+**yt-dlp-media-tools** is a simple interactive shell script that wraps the powerful `yt-dlp` tool into an easy step-by-step experience — no technical knowledge required.
 
-- Single videos
-- Full playlists
-- Video as `MP4` or `WEBM`
-- Audio as `MP3`, `M4A`, or `FLAC`
-- Restricted or rate-limited content with optional browser cookies
+It lets you download:
 
-## How To Install
+- 🎬 videos (MP4, WEBM)
+- 🎧 audio (MP3, M4A, FLAC)
+- 📂 full playlists
 
-These steps are written for beginners. You only need to copy the commands for your system.
+Works on **macOS** and **Linux**.
 
-### Before You Copy Commands
+---
 
-#### 1. Open the Terminal app
+## ✨ Features
 
-On macOS, press `Command + Space`, type `Terminal`, and press `Enter`.
+✔ Interactive step-by-step prompts — no commands to memorize
+✔ 5 download formats to choose from
+✔ Automatically names files with index, artist, and title
+✔ Skips already-downloaded files automatically (`archive.txt`)
+✔ Embeds thumbnails and metadata into every file
+✔ Retries failed downloads automatically
+✔ Validates your input at every step
+✔ Run from anywhere with a single `ytmt` command after install
 
-On Linux, open your normal terminal app.
+---
 
-#### 2. Copy a command
+## ⚙️ Requirements
 
-On GitHub, click the copy button in the top-right corner of a command box.
+- macOS or Linux
+- Terminal
+- Internet connection
 
-You can also click inside a command box, select the text, and press `Command + C` on macOS or `Ctrl + C` on Linux.
+The installer checks for `git`, `yt-dlp`, and `ffmpeg`. If anything is missing, it asks before installing packages with your system package manager.
 
-#### 3. Paste it into Terminal and run
+---
 
-Switch back to Terminal, paste the command, and press `Enter`.
+## 🚀 Quick install (recommended)
 
-Use `Command + V` on macOS or `Ctrl + Shift + V` on many Linux terminals.
-
-#### 4. Follow the prompts
-
-If Terminal asks for your password, type your computer login password and press `Enter`.
-
-Password characters may not appear while you type. That is normal.
-
-### macOS
-
-#### Step 1 - Install Homebrew
+Open Terminal and paste this single command:
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
 ```
 
-#### Step 2 - Add Homebrew to Terminal
+This one line will:
+
+✔ Detect your operating system (macOS or Linux)
+✔ Use Homebrew on macOS if it is already installed
+✔ Ask before installing `git`, `yt-dlp`, and `ffmpeg` if missing
+✔ Download the project into `~/.local/share/yt-dlp-media-tools`
+✔ Create a global command called **`ytmt`**, runnable from any folder
+
+> 💡 **Why `~/.local/share`?** It's a hidden, standard location for app data — it won't show up in Finder/Files by default and won't get deleted by accident. To remove the tool later, see [Uninstall](#️-uninstall).
+
+> 🔒 **Security tip:** Piping `curl | bash` runs a remote script directly. If you'd rather review the code first, open the [install.sh source](https://github.com/corado-bogos/yt-dlp-media-tools/blob/main/install.sh) or use the manual installation below.
+
+Once it finishes, start the tool from **any** terminal window with:
 
 ```bash
-echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-eval "$(/opt/homebrew/bin/brew shellenv)"
+ytmt
 ```
 
-#### Step 3 - Check Homebrew
+> If you see a warning about your `PATH`, follow the one-line instruction it prints (add `~/.local/bin` to your `PATH`), then restart your terminal or run `source ~/.bashrc` / `source ~/.zshrc`. After that, `ytmt` will work everywhere.
 
-```bash
-brew --version
-```
+---
 
-If `brew` is still not found, close Terminal, open it again, and run `brew --version` one more time.
+## 🛠️ Manual installation
 
-#### Step 4 - Install Git
+If you prefer to clone the repository yourself first (e.g. to inspect the code before running anything):
 
-```bash
-brew install git
-```
-
-#### Step 5 - Download this project
-
-```bash
-git clone https://github.com/corado-bogos/yt-dlp-media-tools
-cd yt-dlp-media-tools
-```
-
-#### Step 6 - Run the installer
-
-```bash
-chmod +x install.sh
-./install.sh
-```
-
-#### Step 7 - Start the tool
-
-```bash
-cd yt-dlp-media-tools
-./yt-dlp-media-tools.sh
-```
-Use this command every time you want to start the program. If it doesn’t work, first open the folder in the terminal and then run the program.
-
-### Linux
-
-#### Step 1 - Install Git
-
-Debian / Ubuntu:
-
-```bash
-sudo apt update
-sudo apt install git
-```
-
-Fedora:
-
-```bash
-sudo dnf install git
-```
-
-Arch:
-
-```bash
-sudo pacman -S git
-```
-
-#### Step 2 - Download this project
+### Step 1 — Clone the repository
 
 ```bash
 git clone https://github.com/corado-bogos/yt-dlp-media-tools
 cd yt-dlp-media-tools
 ```
 
-#### Step 3 - Run the installer
+> 💡 If you don't have `git` yet, install it first:
+>
+> - **Mac:** `brew install git` (requires [Homebrew](https://brew.sh))
+> - **Linux:** `sudo apt-get install git`
+
+### Step 2 — Run the installer
 
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
 
-#### Step 4 - Start the tool
+The installer will automatically:
+
+✔ Detect your operating system (macOS or Linux)
+✔ Use Homebrew on macOS if it is already installed
+✔ Ask before installing `yt-dlp` and `ffmpeg` if missing
+✔ Skip tools that are already installed
+✔ Verify that `yt-dlp` and `ffmpeg` can run
+✔ Make the main script executable
+✔ Create the global `ytmt` command pointing at this folder
+
+---
+
+## 🔄 Updating
+
+Re-run the same one-line install command at any time:
 
 ```bash
-cd yt-dlp-media-tools
-./yt-dlp-media-tools.sh
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
 ```
-Use this command every time you want to start the program. If it doesn’t work, first open the folder in the terminal and then run the program.
 
-## Installer
+It detects the existing installation in `~/.local/share/yt-dlp-media-tools`, pulls the latest changes with `git pull --ff-only`, and re-runs the installer to refresh dependencies and the `ytmt` command. If you changed files locally in that folder, commit, stash, or remove those changes before updating.
 
-`install.sh` prepares the project for you.
+If you used the manual install, just run `git pull` followed by `./install.sh` from inside your cloned folder.
 
-It can:
+---
 
-- Detect macOS or Linux
-- Check for `yt-dlp`
-- Check for `ffmpeg`
-- Install missing tools with a supported package manager
-- Make shell scripts executable
+## 🗑️ Uninstall
 
-Supported package managers:
-
-- macOS: `brew`
-- Linux: `apt-get`, `dnf`, `pacman`, `zypper`
-
-## How To Use
-
-Run:
+Everything lives in two predictable places, so removal is a couple of terminal commands:
 
 ```bash
-cd yt-dlp-media-tools
-./yt-dlp-media-tools.sh
-```
-Use this command every time you want to start the program. If it doesn’t work, first open the folder in the terminal and then run the program.
-Then follow the terminal steps.
-
-### 1. Save Folder
-
-The default download folder is:
-
-```text
-~/Desktop
+rm -rf ~/.local/share/yt-dlp-media-tools
+rm -f ~/.local/bin/ytmt
 ```
 
-Press `Enter` to use Desktop, or paste another existing folder path.
+If you added the `export PATH=...` line to your shell config during install, you can remove it too (optional).
 
-You can type `back` on later steps to return to the previous step.
+---
 
-You can type `exit` at any prompt to close the program.
+## ▶️ Usage
 
-### 2. URL
+After installation, run from anywhere:
 
-Paste a video or playlist URL.
-
-The URL must start with:
-
-```text
-http://
+```bash
+ytmt
 ```
 
-or:
+(or `./yt-dlp-media-tools.sh` from inside the project folder if you used the manual install without the global command)
 
-```text
-https://
+The tool will guide you through 3 simple steps.
+
+---
+
+## 📌 How it works
+
+### 📁 Step 1 — Choose save location
+
+You will see:
+
+```
+Paste your save location:
 ```
 
-If the URL is wrong, the tool asks again instead of closing.
+Type or paste the path to an existing folder on your Mac.
 
-### 3. Format
+**Examples:**
 
-Choose a number:
-
-```text
-1) MP4   - Best video quality
-2) WEBM  - Native YouTube quality, thumbnail saved separately
-3) MP3   - Maximum compatibility
-4) M4A   - Good audio quality
-5) FLAC  - No thumbnail image; does not improve source quality
+```
+/Users/yourname/Music
+~/Music
+~/Downloads
 ```
 
-FLAC note: FLAC is lossless, but it cannot make YouTube or streaming audio better than the original source.
+> 💡 **Mac tip:** Open Finder → go to your folder → hold **Option** → right-click → **Copy as Pathname** → paste into Terminal.
 
-### 4. Browser Cookies
+If the folder doesn't exist, the tool will show an error and stop.
 
-Choose a number:
+---
 
-```text
-0) Skip cookies
-1) Chrome
-2) Firefox
-3) Safari
-4) Edge
-5) Brave
+### 🔗 Step 2 — Paste your URL
+
+You can paste:
+
+- A single video link
+- A single audio link
+- A full playlist link
+
+> The URL must start with `http://` or `https://` — otherwise the tool will show an error.
+
+---
+
+### 🎛️ Step 3 — Choose download mode
+
+```
+1) 🎬 MP4  - Best video quality
+2) 🌐 WEBM - Native YouTube quality
+3) 🎧 MP3  - Maximum compatibility
+4) 🎵 M4A  - Good audio quality
+5) 🔥 FLAC - Converted lossless
 ```
 
-Cookies are optional, but they can help with:
+Type a number (1–5) and press **Enter**.
 
-- Age-restricted videos
-- Members-only content
-- Private or login-required videos
-- Large playlists
-- YouTube rate limits
+---
 
-For most users, Chrome, Brave, Edge, or Firefox are recommended.
+## 🎬 Video modes
 
-Safari can work, but macOS may require Full Disk Access for Terminal.
+| Mode | Format | What it does |
+| --- | --- | --- |
+| 1 | MP4 | Downloads best video + best audio and merges them |
+| 2 | WEBM | Downloads native YouTube quality without re-encoding |
 
-If browser cookies cannot be loaded, the tool asks if you want to download anyway without cookies.
+Both modes embed the thumbnail and metadata automatically.
 
-## Output
+---
 
-Files are saved in the folder you selected.
+## 🎧 Audio modes
 
-Example:
+| Mode | Format | Best for |
+| --- | --- | --- |
+| 3 | MP3 | Universal compatibility — cars, phones, speakers |
+| 4 | M4A | Good quality with smaller file size |
+| 5 | FLAC | Highest quality, larger files |
 
-```text
-Desktop/
-|-- 001 - Artist - Song Title.mp3
-|-- 002 - Artist - Song Title.mp3
-|-- 003 - Artist - Song Title.mp3
-`-- archive.txt
+All audio modes extract the best available audio source and embed thumbnail and metadata.
+
+---
+
+## 📂 Output structure
+
+Files are saved in the folder you selected, named automatically:
+
+```
+Music/
+ ├── 001 - Artist - Song Title.mp3
+ ├── 002 - Artist - Song Title.mp3
+ ├── 003 - Artist - Song Title.mp3
 ```
 
-`archive.txt` tracks already downloaded items so repeated runs can skip duplicates.
+---
 
-This tool does not save `yt-dlp-last-run.log`.
+## 🔁 Re-running the tool
 
-## Formats
+The tool creates an `archive.txt` file in your save folder after the first run. This file tracks what has already been downloaded — so running the tool again on the same playlist will skip files you already have.
 
-| Option | Format | Best For | Thumbnail |
-|---|---|---|---|
-| 1 | MP4 | Most video players | Embedded when supported |
-| 2 | WEBM | Native YouTube quality | Saved separately as JPG |
-| 3 | MP3 | Cars, phones, speakers | Embedded when supported |
-| 4 | M4A | Good quality, smaller files | Embedded when supported |
-| 5 | FLAC | Lossless conversion from source | No thumbnail |
+---
 
-## Support
+## ⚠️ macOS permissions
 
-For bugs or questions, open an issue:
+The first time you run this tool, macOS may ask:
+> *"Terminal wants to access data from other applications"*
 
-https://github.com/corado-bogos/yt-dlp-media-tools/issues
+✔ Click **Allow**
+✔ Enter your password if prompted
 
-For common fixes, see:
+This is required for reading browser cookies.
 
-[TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+---
 
-Private contact:
+## 🔐 Browser note
 
-```text
-corado.dev@icloud.com
-```
+This tool uses **Chrome** browser cookies by default (`--cookies-from-browser chrome`).
 
-## License
+To avoid issues:
 
-This project is for educational and personal use only.
+✔ Make sure **Google Chrome** is installed
+✔ Keep Chrome open while downloading
+✔ Do **not** use private / incognito mode
 
+> Browser cookies help bypass rate limits and allow downloading age-restricted or large playlists reliably.
+
+---
+
+## 🔥 Possible upgrades
+
+- GUI / app-style interface (no Terminal needed)
+- Support for additional browsers (Firefox, Safari)
+- Automatic yt-dlp update check on launch
+
+---
+
+## 📄 License
+
+This project is for **personal and educational use only.**
 See [LICENSE.md](LICENSE.md) for full terms.
