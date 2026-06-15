@@ -2,8 +2,14 @@
 
 set -euo pipefail
 
+VERSION="1.1.0"
 SCRIPT_NAME="yt-dlp-media-tools.sh"
 REQUIRED_COMMANDS=(yt-dlp ffmpeg)
+
+REPO_URL="https://github.com/corado-bogos/yt-dlp-media-tools.git"
+INSTALL_DIR="${YTMT_INSTALL_DIR:-$HOME/.local/share/yt-dlp-media-tools}"
+BIN_DIR="${YTMT_BIN_DIR:-$HOME/.local/bin}"
+COMMAND_NAME="ytmt"
 
 if [[ -t 1 ]] && command -v tput >/dev/null 2>&1; then
   BOLD="$(tput bold)"
@@ -107,7 +113,6 @@ sudo_command() {
     if ! command_exists sudo; then
       fail "sudo is required to install packages on this Linux system."
     fi
-
     sudo "$@"
   fi
 }
@@ -129,8 +134,57 @@ install_with_linux_package_manager() {
     info "Installing missing packages with zypper: ${packages[*]}"
     sudo_command zypper install -y "${packages[@]}"
   else
-    fail "No supported Linux package manager found. Install yt-dlp and ffmpeg manually."
+    fail "No supported Linux package manager found. Install the missing tools manually: ${packages[*]}"
   fi
+}
+
+install_packages() {
+  local os_name="$1"
+  shift
+  local packages=("$@")
+
+  if [[ "${#packages[@]}" -eq 0 ]]; then
+    return 0
+  fi
+
+  case "$os_name" in
+    Darwin)
+      install_with_homebrew "${packages[@]}"
+      ;;
+    Linux)
+      install_with_linux_package_manager "${packages[@]}"
+      ;;
+    *)
+      fail "Unsupported operating system: $os_name"
+      ;;
+  esac
+}
+
+confirm_install_packages() {
+  local packages="$*"
+  local answer
+
+  if [[ "${YTMT_ASSUME_YES:-0}" == "1" ]]; then
+    return 0
+  fi
+
+  if [[ ! -t 0 ]]; then
+    fail "Missing packages need to be installed: $packages. Re-run in an interactive terminal or set YTMT_ASSUME_YES=1."
+  fi
+
+  printf "Install missing packages now? (%s) [y/N]: " "$packages"
+  if ! read -r answer; then
+    fail "Cannot continue without confirmation to install required packages: $packages"
+  fi
+
+  case "$answer" in
+    [yY]|[yY][eE][sS])
+      return 0
+      ;;
+    *)
+      fail "Cannot continue without required packages: $packages"
+      ;;
+  esac
 }
 
 make_scripts_executable() {
@@ -147,8 +201,8 @@ make_scripts_executable() {
 
 print_header() {
   printf "\n"
-  printf "%s%syt-dlp-media-tools installer%s\n" "$BOLD" "$BLUE" "$RESET"
-  printf "%s\n" "--------------------------------"
+  printf "%s%syt-dlp-media-tools installer (v%s)%s\n" "$BOLD" "$BLUE" "$VERSION" "$RESET"
+  printf "%s\n" "--------------------------------------"
 }
 
 display_system_name() {
@@ -159,24 +213,89 @@ display_system_name() {
   esac
 }
 
-main() {
-  local os_name
-  local missing=()
+# ----------------------------------------------------------------------------
+# Bootstrap mode
+#
+# This lets the installer be run directly via:
+#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
+#
+# without the user having to manually clone the repository first. If the
+# script is not being run from inside an existing checkout (SCRIPT_NAME is
+# missing in the current directory), it clones/updates the project into
+# INSTALL_DIR and re-runs itself from there.
+# ----------------------------------------------------------------------------
+bootstrap_and_install() {
+  local os_name="$1"
 
-  print_header
-
-  if [[ ! -f "$SCRIPT_NAME" ]]; then
-    fail "Could not find $SCRIPT_NAME. Run this installer from the project folder."
-  fi
-
-  os_name="$(uname -s)"
-  info "Detected system: $(display_system_name "$os_name")"
-
-  make_scripts_executable
+  info "Running in one-line install mode"
+  info "Install location: $INSTALL_DIR"
 
   if [[ "$os_name" == "Darwin" ]]; then
     setup_homebrew_path || warn "Homebrew was not found in PATH or common install locations."
   fi
+
+  if ! command_exists git; then
+    warn "git is required to download the project and is not installed."
+    confirm_install_packages git
+    install_packages "$os_name" git
+  fi
+
+  if [[ -d "$INSTALL_DIR/.git" ]]; then
+    info "Existing installation found, updating to the latest version..."
+    git -C "$INSTALL_DIR" pull --ff-only
+  elif [[ -e "$INSTALL_DIR" ]]; then
+    fail "$INSTALL_DIR already exists and is not a git repository. Remove it or set YTMT_INSTALL_DIR to a different path, then try again."
+  else
+    info "Cloning repository into $INSTALL_DIR"
+    mkdir -p "$(dirname "$INSTALL_DIR")"
+    git clone --depth 1 "$REPO_URL" "$INSTALL_DIR"
+  fi
+
+  cd "$INSTALL_DIR"
+  exec bash "./install.sh"
+}
+
+# ----------------------------------------------------------------------------
+# Local install (runs once we are inside the project directory, either
+# because the user cloned it manually or because bootstrap_and_install
+# cloned it and re-exec'd this script)
+# ----------------------------------------------------------------------------
+setup_global_command() {
+  local target="$PWD/$SCRIPT_NAME"
+
+  mkdir -p "$BIN_DIR"
+  ln -sf "$target" "$BIN_DIR/$COMMAND_NAME"
+  ok "Created command '$COMMAND_NAME' -> $target"
+
+  if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+    warn "$BIN_DIR is not in your PATH yet."
+    printf "Add this line to your shell config (~/.bashrc, ~/.zshrc, etc.) and restart your terminal:\n\n"
+    printf "  export PATH=\"%s:\$PATH\"\n\n" "$BIN_DIR"
+    PATH_NEEDS_SETUP=1
+  else
+    PATH_NEEDS_SETUP=0
+  fi
+}
+
+verify_required_tools() {
+  local yt_dlp_version
+
+  if ! yt_dlp_version="$(yt-dlp --version 2>/dev/null)"; then
+    fail "yt-dlp is installed but did not run correctly. Try updating or reinstalling it, then run this installer again."
+  fi
+
+  if ! ffmpeg -version >/dev/null 2>&1; then
+    fail "ffmpeg is installed but did not run correctly. Try updating or reinstalling it, then run this installer again."
+  fi
+
+  ok "Verified yt-dlp ($yt_dlp_version) and ffmpeg"
+}
+
+run_local_install() {
+  local os_name="$1"
+  local missing=()
+
+  make_scripts_executable
 
   while IFS= read -r item; do
     if [[ -n "$item" ]]; then
@@ -188,18 +307,8 @@ main() {
     ok "yt-dlp and ffmpeg are already installed"
   else
     warn "Missing packages: ${missing[*]}"
-
-    case "$os_name" in
-      Darwin)
-        install_with_homebrew "${missing[@]}"
-        ;;
-      Linux)
-        install_with_linux_package_manager "${missing[@]}"
-        ;;
-      *)
-        fail "Unsupported operating system: $os_name"
-        ;;
-    esac
+    confirm_install_packages "${missing[@]}"
+    install_packages "$os_name" "${missing[@]}"
   fi
 
   while IFS= read -r item; do
@@ -208,10 +317,41 @@ main() {
     fi
   done < <(missing_commands)
 
+  verify_required_tools
+  setup_global_command
+
   printf "\n"
   ok "Installation complete"
-  printf "Start the tool with:\n\n"
-  printf "  ./%s\n\n" "$SCRIPT_NAME"
+  printf "Project location: %s\n\n" "$PWD"
+
+  if [[ "${PATH_NEEDS_SETUP:-0}" -eq 1 ]]; then
+    printf "After updating your PATH, restart your terminal or run:\n\n"
+    printf "  source ~/.bashrc  # or source ~/.zshrc\n\n"
+    printf "Then start the tool from anywhere with:\n\n"
+  else
+    printf "Start the tool from anywhere with:\n\n"
+  fi
+  printf "  %s\n\n" "$COMMAND_NAME"
+  printf "(or run %s./%s%s from inside %s)\n\n" "$BOLD" "$SCRIPT_NAME" "$RESET" "$PWD"
+}
+
+main() {
+  local os_name
+
+  print_header
+
+  os_name="$(uname -s)"
+  info "Detected system: $(display_system_name "$os_name")"
+
+  if [[ "$os_name" != "Darwin" && "$os_name" != "Linux" ]]; then
+    fail "Unsupported operating system: $os_name"
+  fi
+
+  if [[ -f "$SCRIPT_NAME" ]]; then
+    run_local_install "$os_name"
+  else
+    bootstrap_and_install "$os_name"
+  fi
 }
 
 main "$@"
