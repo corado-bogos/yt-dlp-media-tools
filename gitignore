@@ -1,0 +1,49 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# Archives
+*.zip
+*.tar
+*.gz
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# VS Code
+.vscode/
+
+# JetBrains IDEs
+.idea/
+
+# Local test files
+test-downloads/
+downloads/
+output/
+
+# Environment files
+.env
+.env.*
+
+# Shell history
+.history
+
+# Generated media
+*.part
+*.ytdl
+
+# User-specific files
+archive.txt
