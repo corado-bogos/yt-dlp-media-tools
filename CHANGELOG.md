@@ -1,9 +1,50 @@
 # CHANGELOG
 
-
 All notable changes to `yt-dlp-media-tools` are documented here.
 
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) conventions.
+
+---
+
+## [v1.2.0] — 2026-06-17
+
+**Security release: Critical fixes for temporary file handling and input validation.**
+
+### Security Fixes
+
+**Download Script (`yt-dlp-media-tools.sh`)**
+
+- Temporary files now created with restrictive permissions (600 = `rw-------`) to prevent other processes from reading sensitive data (cookies, URLs, error messages)
+- Added automatic cleanup of temporary files via `EXIT` and `INT` traps — prevents orphaned files in `/tmp` if script terminates abnormally
+- Added `is_valid_url()` validation function to reject URLs with invalid characters before passing to `yt-dlp`, reducing command injection risk
+- All temporary files tracked in `_YTMT_TEMP_FILES` array for guaranteed cleanup
+
+### Bug Fixes
+
+**Download Script (`yt-dlp-media-tools.sh`)**
+
+- Cookie error detection rewritten: now distinguishes between "permission denied" errors (non-fatal, allow retry without cookies) and actual download errors (fatal, stop)
+- ffmpeg warning message now shown only once per session instead of repeated on every mode selection
+- Log files now saved to `$MUSIC_PATH/ytmt-last-run.log` (selected download folder) instead of `$PWD/ytmt-last-run.log` (shell's current directory)
+- Added folder writability check: validates with `-w` flag before attempting download, gives clear error if folder is not writable
+- URL input now trimmed of leading/trailing whitespace with new `trim_input()` function
+- Cookie and browser variables properly reset in `prompt_cookies()` to prevent state leakage between prompts
+
+**Installer (`install.sh`)**
+
+- Version string synchronized: installer now shows `v1.2.0` matching latest release
+
+### Documentation
+
+- Updated README with "Environment Variables" section documenting `YTMT_KEEP_LOG=1`, `YTMT_ASSUME_YES=1`, `YTMT_INSTALL_DIR`, `YTMT_BIN_DIR`
+- Added `.editorconfig` for consistent indentation across contributions
+- Added `.shellcheckrc` to suppress false positive shellcheck warnings in configuration
+
+### Improvements
+
+- Better error messages throughout; clarified when folders are missing vs. not writable
+- Improved input validation on all prompts
+- Explicit variable initialization to prevent undefined behavior in edge cases
 
 ---
 
@@ -15,15 +56,15 @@ Bug fixes and documentation corrections identified during a deep review of v1.1.
 
 **Download Script (`yt-dlp-media-tools.sh`)**
 
-- `ensure_ffmpeg_available` called `fail()` (which calls `exit 1`) when ffmpeg was missing, terminating the entire program instead of letting the user pick a different mode or see a recoverable error. The function is now called before mode selection is confirmed so the error is surfaced at the right moment, or alternatively the failure is handled gracefully without killing the session.
-- Cookie errors in `run_ytdlp` unconditionally set `DOWNLOAD_HAS_ERRORS=1` via a blanket `grep -q "ERROR:"` on the temp output file, even when the only error was a cookie permission issue that the user had already acknowledged and chosen to retry without. This caused the final summary box to show `DOWNLOAD FINISHED WITH ERRORS` after a successful cookie-less retry. Cookie-only errors are now excluded from the `DOWNLOAD_HAS_ERRORS` grep when `COOKIE_ERROR_DETECTED=1` and the retry succeeded.
-- Output filename template used `%(playlist_index&{} - |)s` which inserts the raw playlist index (e.g. `1`, `12`) without zero-padding. The README and v1.0.0 changelog described output as `001 - Artist - Title.mp3`. Template updated to `%(playlist_index&{:03d} - |)s` so playlist numbering matches the documented format.
+- `ensure_ffmpeg_available` called `fail()` (which calls `exit 1`) when ffmpeg was missing, terminating the entire program instead of letting the user pick a different mode or see a recoverable error
+- Cookie errors in `run_ytdlp` unconditionally set `DOWNLOAD_HAS_ERRORS=1` via a blanket `grep -q "ERROR:"` on the temp output file, even when the only error was a cookie permission issue that the user could retry without cookies
+- Output filename template used `%(playlist_index&{} - |)s` which inserts the raw playlist index (e.g. `1`, `12`) without zero-padding. The README and v1.0.0 changelog described output as `001 - Artist - Song Title.mp3` (zero-padded). Template corrected to `%(playlist_index&{:03d} - |)s`
 
 **Documentation**
 
-- README Screenshots section was missing `02-url.png` and `05-starting-download.png`, both of which exist in `assets/`. Added the two missing screenshot entries.
-- README Output Structure example showed `001 - Artist - Song Title.mp3` (zero-padded), which did not match what the old template actually produced. Now consistent with the fixed template above.
-- CHANGELOG v1.1.0 listed the installer `VERSION` variable as matching the release, but `install.sh` had `VERSION="1.2.0"` while the latest changelog entry was `v1.1.0`. Version string in `install.sh` corrected to `1.1.0` to match the actual release.
+- README Screenshots section was missing `02-url.png` and `05-starting-download.png`, both of which exist in `assets/`. Added the two missing screenshot entries
+- README Output Structure example showed `001 - Artist - Song Title.mp3` (zero-padded), which did not match what the old template actually produced. Now consistent with the fixed template above
+- CHANGELOG v1.1.0 listed the installer `VERSION` variable as matching the release, but `install.sh` had `VERSION="1.2.0"` while the latest changelog entry was `v1.1.0`. Version string in `install.sh` corrected to `v1.1.1`
 
 ---
 
