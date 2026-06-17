@@ -4,7 +4,7 @@ A beginner-friendly macOS terminal tool for downloading videos, audio, and playl
 
 [![Shell](https://img.shields.io/badge/shell-bash-blue)](https://www.gnu.org/software/bash/)
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](#requirements)
-[![Version](https://img.shields.io/badge/version-v1.1.1-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v1.2.0-orange)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-Personal%20Use-green)](LICENSE.md)
 
 ---
@@ -23,6 +23,7 @@ A beginner-friendly macOS terminal tool for downloading videos, audio, and playl
 - [Output Structure](#output-structure)
 - [Archive Tracking](#archive-tracking)
 - [Optional Logs](#optional-logs)
+- [Environment Variables](#environment-variables)
 - [Screenshots](#screenshots)
 - [Support](#support)
 - [License](#license)
@@ -31,7 +32,7 @@ A beginner-friendly macOS terminal tool for downloading videos, audio, and playl
 
 ## Overview
 
-**yt-dlp-media-tools** is a simple interactive shell script that wraps the powerful [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) tool into an easy step-by-step macOS experience — no technical knowledge required.
+**yt-dlp-media-tools** is a simple interactive shell script that wraps the powerful [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) tool into an easy step-by-step macOS experience — no technical knowledge needed.
 
 It lets you download:
 
@@ -121,7 +122,7 @@ YTMT_INSTALL_DIR="$HOME/my-tools/yt-dlp-media-tools" bash -c "$(curl -fsSL https
 
 ### Security Note
 
-Piping `curl | bash` runs a remote script directly on your machine. If you prefer to review the code first, read [install.sh](install.sh), then use the [manual installation](#manual-installation) below.
+Piping `curl | bash` runs a remote script directly on your machine. If you prefer to review the code first, read [install.sh](install.sh), then use the [manual installation](#manual-installation) method instead.
 
 ---
 
@@ -291,7 +292,7 @@ If artist or uploader metadata is missing, the tool uses a safe fallback instead
 
 ## Archive Tracking
 
-After the first run, the tool creates `archive.txt` in your save folder. This file records every downloaded item. Running the tool again on the same playlist automatically skips files you already have.
+After the first run, the tool creates `archive.txt` in your save folder. This file records every downloaded item. Running the tool again on the same playlist automatically skips files you already downloaded.
 
 To re-download a file, remove its line from `archive.txt` or delete the file to reset the entire history.
 
@@ -306,6 +307,33 @@ YTMT_KEEP_LOG=1 ytmt
 ```
 
 The log is saved as `ytmt-last-run.log` in your selected download folder.
+
+---
+
+## Environment Variables
+
+The tool respects the following environment variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `YTMT_KEEP_LOG` | `0` | Set to `1` to save full `yt-dlp` output as `ytmt-last-run.log` in the download folder |
+| `YTMT_ASSUME_YES` | `0` | Set to `1` to auto-confirm all installer prompts (unattended install only) |
+| `YTMT_INSTALL_DIR` | `$HOME/.local/share/yt-dlp-media-tools` | Override the installation directory |
+| `YTMT_BIN_DIR` | `$HOME/.local/bin` | Override where the `ytmt` symlink is created |
+| `YTMT_NO_SHELL_RELOAD` | `0` | Set to `1` to skip shell reload after install |
+
+**Examples:**
+
+```bash
+# Save the last run log
+YTMT_KEEP_LOG=1 ytmt
+
+# Fully unattended install
+YTMT_ASSUME_YES=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
+
+# Custom install location
+YTMT_INSTALL_DIR="$HOME/my-tools/yt-dlp-media-tools" bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
+```
 
 ---
 
