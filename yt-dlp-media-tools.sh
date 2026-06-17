@@ -20,6 +20,24 @@ case ":$PATH:" in
   *) export PATH="$HOME/.local/bin:$PATH" ;;
 esac
 
+# ---------------------------------------------------------------------------
+# Cleanup handler for temporary files
+# ---------------------------------------------------------------------------
+_YTMT_TEMP_FILES=()
+
+cleanup_temp_files() {
+  local file
+  for file in "${_YTMT_TEMP_FILES[@]}"; do
+    if [[ -f "$file" ]]; then
+      command rm -f "$file" 2>/dev/null || true
+    fi
+  done
+  _YTMT_TEMP_FILES=()
+}
+
+trap cleanup_temp_files EXIT
+trap 'printf "\n"; warn "Download cancelled."; exit 130' INT
+
 clear
 
 # =========================
@@ -54,9 +72,8 @@ DOWNLOAD_STATUS=1
 DOWNLOAD_HAS_ERRORS=0
 COOKIE_ERROR_DETECTED=0
 FFMPEG_AVAILABLE=0
+FFMPEG_WARNING_SHOWN=0
 LAST_LOG_PATH=""
-
-trap 'printf "\n"; warn "Download cancelled."; exit 130' INT
 
 repeat_char() {
   local char="$1"
@@ -121,6 +138,13 @@ normalize_input() {
   printf "%s" "$1" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]'
 }
 
+trim_input() {
+  local trimmed="$1"
+  trimmed="${trimmed#"${trimmed%%[![:space:]]*}"}"
+  trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
+  printf "%s" "$trimmed"
+}
+
 is_back() {
   local value
   value="$(normalize_input "$1")"
@@ -154,6 +178,16 @@ require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
     fail "Missing command: $1. Open a new terminal window and try again, or run ./install.sh to (re)install it."
   fi
+}
+
+is_valid_url() {
+  local url="$1"
+
+  if [[ ! "$url" =~ ^https?:// ]]; then
+    return 1
+  fi
+
+  return 0
 }
 
 clear_line() {
@@ -245,34 +279,38 @@ render_progress() {
   fi
 }
 
+create_temp_file() {
+  local temp_file
+  temp_file="$(mktemp "${TMPDIR:-/tmp}/yt-dlp-media-tools.XXXXXX")" || fail "Could not create temporary file."
+  chmod 600 "$temp_file"
+  _YTMT_TEMP_FILES+=("$temp_file")
+  printf "%s" "$temp_file"
+}
+
 run_ytdlp() {
   local status
   local temp_output
-  local log_path
 
-  temp_output="$(mktemp "${TMPDIR:-/tmp}/yt-dlp-media-tools.XXXXXX")" || fail "Could not create temporary output file."
+  temp_output="$(create_temp_file)"
 
   yt-dlp "$@" 2>&1 | tee "$temp_output" | render_progress
   status="${PIPESTATUS[0]}"
 
-  if grep -q "ERROR:" "$temp_output" 2>/dev/null; then
-    if ! grep -Eiq "ERROR:.*cookie|cookies?.*(not found|could not|failed|permission|denied)|operation not permitted|database is locked|full disk access" "$temp_output" 2>/dev/null || \
-       grep -v -Ei "ERROR:.*cookie|cookies?.*(not found|could not|failed|permission|denied)|operation not permitted|database is locked|full disk access" "$temp_output" 2>/dev/null | grep -q "ERROR:"; then
+  DOWNLOAD_HAS_ERRORS=0
+  COOKIE_ERROR_DETECTED=0
+
+  if grep -q "^ERROR:" "$temp_output" 2>/dev/null; then
+    if grep -Eiq "cookie|permission denied|full disk access|database is locked" "$temp_output" 2>/dev/null; then
+      COOKIE_ERROR_DETECTED=1
+    else
       DOWNLOAD_HAS_ERRORS=1
     fi
   fi
 
-  if grep -Eiq "ERROR:.*cookie|cookies?.*(not found|could not|failed|permission|denied)|operation not permitted|database is locked|full disk access" "$temp_output" 2>/dev/null; then
-    COOKIE_ERROR_DETECTED=1
-  fi
-
   if [[ "${YTMT_KEEP_LOG:-0}" == "1" ]]; then
-    log_path="$PWD/ytmt-last-run.log"
-    cp "$temp_output" "$log_path"
-    LAST_LOG_PATH="$log_path"
+    LAST_LOG_PATH="$MUSIC_PATH/ytmt-last-run.log"
+    cp "$temp_output" "$LAST_LOG_PATH"
   fi
-
-  command rm -f "$temp_output"
 
   return "$status"
 }
@@ -298,13 +336,13 @@ prompt_save_location() {
     MUSIC_PATH="${input:-$DEFAULT_DOWNLOAD_PATH}"
     MUSIC_PATH="${MUSIC_PATH/#\~/$HOME}"
 
-    if [[ -d "$MUSIC_PATH" ]]; then
+    if [[ -d "$MUSIC_PATH" ]] && [[ -w "$MUSIC_PATH" ]]; then
       ok "Files will be saved to: $MUSIC_PATH"
       return 0
     fi
 
-    warn "Folder does not exist: $MUSIC_PATH"
-    warn "Please enter an existing folder."
+    warn "Folder does not exist or is not writable: $MUSIC_PATH"
+    warn "Please enter an existing, writable folder."
     printf "\n"
   done
 }
@@ -326,14 +364,16 @@ prompt_url() {
       return 1
     fi
 
+    input="$(trim_input "$input")"
+
     if [[ -z "$input" ]]; then
       warn "URL cannot be empty. Please try again."
       printf "\n"
       continue
     fi
 
-    if [[ ! "$input" =~ ^https?:// ]]; then
-      warn "Invalid URL. It must start with http:// or https://"
+    if ! is_valid_url "$input"; then
+      warn "Invalid URL. It must start with http:// or https://."
       printf "\n"
       continue
     fi
@@ -394,7 +434,10 @@ prompt_download_mode() {
       warn "FLAC mode does not save or embed thumbnail images."
     fi
 
-    ensure_ffmpeg_available || { printf "\n"; continue; }
+    if ! ensure_ffmpeg_available; then
+      printf "\n"
+      continue
+    fi
 
     return 0
   done
@@ -432,17 +475,14 @@ check_browser_cookie_access() {
   local temp_output
   local status
 
-  temp_output="$(mktemp "${TMPDIR:-/tmp}/yt-dlp-media-tools-cookie-check.XXXXXX")" || fail "Could not create temporary cookie check file."
+  temp_output="$(create_temp_file)"
 
   yt-dlp --cookies-from-browser "$browser" --simulate --skip-download --no-playlist --no-warnings "$URL" >"$temp_output" 2>&1
   status=$?
 
   if grep -Eiq "ERROR:.*cookie|cookies?.*(not found|could not|failed|permission|denied)|operation not permitted|database is locked|full disk access|extracted 0 cookies" "$temp_output" 2>/dev/null; then
-    command rm -f "$temp_output"
     return 1
   fi
-
-  command rm -f "$temp_output"
 
   if [[ "$status" -ne 0 ]]; then
     return 2
@@ -456,9 +496,12 @@ ensure_ffmpeg_available() {
     return 0
   fi
 
-  printf "\n"
-  warn "This download mode requires ffmpeg, which was not found."
-  warn "Run ./install.sh to install ffmpeg, then try again."
+  if [[ "$FFMPEG_WARNING_SHOWN" -eq 0 ]]; then
+    warn "This download mode requires ffmpeg, which was not found."
+    warn "Run ./install.sh to install ffmpeg, then try again."
+    FFMPEG_WARNING_SHOWN=1
+  fi
+
   return 1
 }
 
@@ -493,6 +536,7 @@ prompt_cookies() {
     fi
 
     COOKIE_ARGS=()
+    BROWSER=""
 
     case "$input" in
       0)
@@ -525,6 +569,7 @@ prompt_cookies() {
 
         if prompt_yes_no "Download anyway without cookies?"; then
           COOKIE_ARGS=()
+          BROWSER=""
           warn "Continuing without cookies."
           return 0
         fi
@@ -649,6 +694,10 @@ download_once() {
     esac
   done
 
+  if ! [[ -d "$MUSIC_PATH" ]] || ! [[ -w "$MUSIC_PATH" ]]; then
+    fail "Folder no longer exists or is not writable: $MUSIC_PATH"
+  fi
+
   if ! cd "$MUSIC_PATH"; then
     fail "Could not open folder: $MUSIC_PATH"
   fi
@@ -672,6 +721,7 @@ download_once() {
 
       if prompt_yes_no "Download anyway without cookies?"; then
         COOKIE_ARGS=()
+        BROWSER=""
         build_ytdlp_args
         printf "\n"
         warn "Retrying without cookies."
@@ -730,6 +780,7 @@ print_header
 require_command "yt-dlp"
 
 if ! command -v ffmpeg >/dev/null 2>&1; then
+  FFMPEG_AVAILABLE=0
   warn "ffmpeg was not found. Downloads need ffmpeg for merging, conversion, metadata, and thumbnails."
   warn "Run ./install.sh before starting a download."
 else
