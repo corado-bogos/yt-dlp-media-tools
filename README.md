@@ -4,7 +4,7 @@ A beginner-friendly macOS terminal tool for downloading videos, audio, and playl
 
 [![Shell](https://img.shields.io/badge/shell-bash-blue)](https://www.gnu.org/software/bash/)
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](#requirements)
-[![Version](https://img.shields.io/badge/version-v1.2.0-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v1.1.1-orange)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-Personal%20Use-green)](LICENSE.md)
 
 ---
@@ -313,9 +313,13 @@ The log is saved as `ytmt-last-run.log` in your selected download folder.
 
 ![Choose save location](assets/01-save-location.png)
 
+![Paste URL](assets/02-url.png)
+
 ![Choose download mode](assets/03-download-mode.png)
 
 ![Browser cookies](assets/04-browser-cookies.png)
+
+![Starting download](assets/05-starting-download.png)
 
 ---
 
