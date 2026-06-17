@@ -256,7 +256,10 @@ run_ytdlp() {
   status="${PIPESTATUS[0]}"
 
   if grep -q "ERROR:" "$temp_output" 2>/dev/null; then
-    DOWNLOAD_HAS_ERRORS=1
+    if ! grep -Eiq "ERROR:.*cookie|cookies?.*(not found|could not|failed|permission|denied)|operation not permitted|database is locked|full disk access" "$temp_output" 2>/dev/null || \
+       grep -v -Ei "ERROR:.*cookie|cookies?.*(not found|could not|failed|permission|denied)|operation not permitted|database is locked|full disk access" "$temp_output" 2>/dev/null | grep -q "ERROR:"; then
+      DOWNLOAD_HAS_ERRORS=1
+    fi
   fi
 
   if grep -Eiq "ERROR:.*cookie|cookies?.*(not found|could not|failed|permission|denied)|operation not permitted|database is locked|full disk access" "$temp_output" 2>/dev/null; then
@@ -391,7 +394,7 @@ prompt_download_mode() {
       warn "FLAC mode does not save or embed thumbnail images."
     fi
 
-    ensure_ffmpeg_available
+    ensure_ffmpeg_available || { printf "\n"; continue; }
 
     return 0
   done
@@ -454,7 +457,9 @@ ensure_ffmpeg_available() {
   fi
 
   printf "\n"
-  fail "This download mode requires ffmpeg. Run ./install.sh, then try again."
+  warn "This download mode requires ffmpeg, which was not found."
+  warn "Run ./install.sh to install ffmpeg, then try again."
+  return 1
 }
 
 prompt_cookies() {
@@ -537,7 +542,7 @@ prompt_cookies() {
 }
 
 build_ytdlp_args() {
-  OUTPUT_TEMPLATE="%(playlist_index&{} - |)s%(artist,uploader,creator,channel|Unknown Artist)s - %(title|Untitled)s.%(ext)s"
+  OUTPUT_TEMPLATE="%(playlist_index&{:03d} - |)s%(artist,uploader,creator,channel|Unknown Artist)s - %(title|Untitled)s.%(ext)s"
 
   COMMON_ARGS=(
     --yes-playlist
