@@ -104,6 +104,10 @@ chore: update yt-dlp to latest version
 
 ---
 
+## Changelog & Versioning
+
+When you change behaviour, add a line to `CHANGELOG.md` under the current version. If you are cutting a new version, also bump the `VERSION` value in both `yt-dlp-media-tools.sh` and `install.sh`.
+
 ## License
 
 By contributing, you agree that your changes will be licensed under the same terms as the rest of the project. See [LICENSE.md](LICENSE.md) for details.
