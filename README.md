@@ -132,7 +132,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-medi
 
 - Issues: https://github.com/corado-bogos/yt-dlp-media-tools/issues
 - Troubleshooting: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-- Contact: corado.dev@icloud.com
+- Contact: corado.dev@gmail.com
 
 ---
 
