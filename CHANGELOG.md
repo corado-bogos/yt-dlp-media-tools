@@ -4,9 +4,11 @@ All notable changes to `yt-dlp-media-tools` are documented here.
 
 ---
 
-## [v1.2.1-beta.3] — 2026-07-01
+## [v1.2.1] — 2026-07-02
 
 ### Fixed
+
+- **`exit` at the archive prompt** — typing `exit` at the "Skip already-downloaded files?" step (1/4) now quits the program, matching every other prompt. Previously it was treated as a normal answer and the wizard continued.
 
 - **Empty-array crash under `set -u`** — since `set -u` was added in beta.1, expanding an empty array (`"${COOKIE_ARGS[@]}"`, `"${_YTMT_TEMP_FILES[@]}"`) aborted the script with `unbound variable` on the stock macOS bash 3.2. This crashed the most common path — downloading with cookies skipped — right before the download started, and also broke the `EXIT` cleanup trap. Both expansions are now guarded with `${arr[@]+"${arr[@]}"}`.
 - **Temp files were never cleaned up** — `create_temp_file` was only ever called via command substitution (`$(create_temp_file)`), so its `_YTMT_TEMP_FILES+=(...)` append ran in a subshell and was discarded. The parent array stayed empty and the `EXIT`/`INT` cleanup trap removed nothing, leaking temp files into `$TMPDIR`. The helper now stores the path in `_YTMT_LAST_TEMP_FILE` and is called directly, so tracking and cleanup work as intended. (As a side effect, a failed `mktemp` now correctly aborts the program instead of only the subshell.)
@@ -31,7 +33,7 @@ All notable changes to `yt-dlp-media-tools` are documented here.
 - **Navigation hints** — replaced verbose instructions with `back • exit`.
 - **README** — significantly reduced (137 lines, was 380).
 - **TROUBLESHOOTING** — significantly reduced (194 lines, was 403).
-- Version bumped to `v1.2.1-beta.3`.
+- Version bumped to `v1.2.1` (first stable release of the 1.2.1 line).
 
 ---
 
