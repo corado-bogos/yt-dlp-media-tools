@@ -1,12 +1,30 @@
 #!/usr/bin/env bash
 
-set -o pipefail
+set -uo pipefail
 
-# ---------------------------------------------------------------------------
-# Make sure Homebrew and the user's local bin (~/.local/bin) are on PATH,
-# even in a fresh terminal session that hasn't picked up the installer's
-# PATH changes yet. This prevents false "yt-dlp not found" errors.
-# ---------------------------------------------------------------------------
+VERSION="1.2.1-beta.3"
+
+# ── CLI flags ─────────────────────────────────────────────────────────────────
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  printf "ytmt — interactive media downloader\n\n"
+  printf "Usage:\n"
+  printf "  ytmt             Start the download wizard\n"
+  printf "  ytmt --help      Show this help\n"
+  printf "  ytmt --version   Show version\n\n"
+  printf "Formats: MP4, WEBM, MP3, M4A, FLAC\n\n"
+  printf "Environment:\n"
+  printf "  YTMT_KEEP_LOG=1  Save full yt-dlp log to the download folder\n\n"
+  printf "Version : %s\n" "$VERSION"
+  printf "Website : https://github.com/corado-bogos/yt-dlp-media-tools\n"
+  exit 0
+fi
+
+if [[ "${1:-}" == "--version" || "${1:-}" == "-v" ]]; then
+  printf "yt-dlp-media-tools v%s\n" "$VERSION"
+  exit 0
+fi
+
+# ── PATH: Homebrew + ~/.local/bin ─────────────────────────────────────────────
 for _ytmt_brew in /opt/homebrew/bin/brew /usr/local/bin/brew; do
   if [[ -x "$_ytmt_brew" ]]; then
     eval "$("$_ytmt_brew" shellenv)"
@@ -20,29 +38,23 @@ case ":$PATH:" in
   *) export PATH="$HOME/.local/bin:$PATH" ;;
 esac
 
-# ---------------------------------------------------------------------------
-# Cleanup handler for temporary files
-# ---------------------------------------------------------------------------
+# ── Temp file cleanup ─────────────────────────────────────────────────────────
 _YTMT_TEMP_FILES=()
+_YTMT_LAST_TEMP_FILE=""
 
 cleanup_temp_files() {
   local file
-  for file in "${_YTMT_TEMP_FILES[@]}"; do
-    if [[ -f "$file" ]]; then
-      command rm -f "$file" 2>/dev/null || true
-    fi
+  for file in ${_YTMT_TEMP_FILES[@]+"${_YTMT_TEMP_FILES[@]}"}; do
+    if [[ -f "$file" ]]; then command rm -f "$file" 2>/dev/null; fi
   done
   _YTMT_TEMP_FILES=()
 }
 
 trap cleanup_temp_files EXIT
-trap 'printf "\n"; warn "Download cancelled."; exit 130' INT
 
 clear
 
-# =========================
-# TERMINAL UI
-# =========================
+# ── Terminal colors ───────────────────────────────────────────────────────────
 if [[ -t 1 ]] && command -v tput >/dev/null 2>&1; then
   BOLD="$(tput bold)"
   DIM="$(tput dim)"
@@ -53,14 +65,7 @@ if [[ -t 1 ]] && command -v tput >/dev/null 2>&1; then
   MAGENTA="$(tput setaf 5)"
   RESET="$(tput sgr0)"
 else
-  BOLD=""
-  DIM=""
-  RED=""
-  GREEN=""
-  YELLOW=""
-  BLUE=""
-  MAGENTA=""
-  RESET=""
+  BOLD="" DIM="" RED="" GREEN="" YELLOW="" BLUE="" MAGENTA="" RESET=""
 fi
 
 BAR_WIDTH=34
@@ -73,18 +78,13 @@ DOWNLOAD_HAS_ERRORS=0
 COOKIE_ERROR_DETECTED=0
 FFMPEG_AVAILABLE=0
 FFMPEG_WARNING_SHOWN=0
+ARCHIVE_ENABLED=1
 LAST_LOG_PATH=""
 
+# ── UI primitives ─────────────────────────────────────────────────────────────
 repeat_char() {
-  local char="$1"
-  local count="$2"
-  local output=""
-  local i
-
-  for ((i = 0; i < count; i++)); do
-    output+="$char"
-  done
-
+  local char="$1" count="$2" output="" i
+  for ((i = 0; i < count; i++)); do output+="$char"; done
   printf "%s" "$output"
 }
 
@@ -95,18 +95,14 @@ print_box() {
   local right_pad=$(( BOX_INNER_WIDTH - text_len - left_pad ))
   local rule
 
-  if (( left_pad < 0 )); then
-    left_pad=1
-  fi
-
-  if (( right_pad < 0 )); then
-    right_pad=1
-  fi
+  (( left_pad  < 1 )) && left_pad=1
+  (( right_pad < 1 )) && right_pad=1
 
   rule="$(repeat_char "-" "$BOX_INNER_WIDTH")"
 
   printf "%s+%s+%s\n" "$ACCENT" "$rule" "$RESET"
-  printf "%s|%s%*s%s%s%s%*s%s|%s\n" "$ACCENT" "$RESET" "$left_pad" "" "$BOLD" "$text" "$RESET" "$right_pad" "" "$ACCENT" "$RESET"
+  printf "%s|%s%*s%s%s%s%*s%s|%s\n" \
+    "$ACCENT" "$RESET" "$left_pad" "" "$BOLD" "$text" "$RESET" "$right_pad" "" "$ACCENT" "$RESET"
   printf "%s+%s+%s\n" "$ACCENT" "$rule" "$RESET"
 }
 
@@ -121,17 +117,15 @@ section() {
   printf "%s------------------------------------------------------------%s\n" "$DIM" "$RESET"
 }
 
-ok() {
-  printf "%s[OK]%s %s\n" "$GREEN" "$RESET" "$1"
-}
+ok()   { printf "%s[OK]%s %s\n"    "$GREEN"  "$RESET" "$1"; }
+warn() { printf "%s[WARN]%s %s\n"  "$YELLOW" "$RESET" "$1"; }
+fail() { printf "%s[ERROR]%s %s\n" "$RED"    "$RESET" "$1"; exit 1; }
 
-warn() {
-  printf "%s[WARN]%s %s\n" "$YELLOW" "$RESET" "$1"
-}
+# INT trap registered after warn() is defined
+trap 'printf "\n"; warn "Download cancelled."; exit 130' INT
 
-fail() {
-  printf "%s[ERROR]%s %s\n" "$RED" "$RESET" "$1"
-  exit 1
+nav_hint() {
+  printf "%sback%s • %sexit%s\n\n" "$DIM" "$RESET" "$DIM" "$RESET"
 }
 
 normalize_input() {
@@ -139,22 +133,22 @@ normalize_input() {
 }
 
 trim_input() {
-  local trimmed="$1"
-  trimmed="${trimmed#"${trimmed%%[![:space:]]*}"}"
-  trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
-  printf "%s" "$trimmed"
+  local s="$1"
+  s="${s#"${s%%[![:space:]]*}"}"
+  s="${s%"${s##*[![:space:]]}"}"
+  printf "%s" "$s"
 }
 
 is_back() {
-  local value
-  value="$(normalize_input "$1")"
-  [[ "$value" == "b" || "$value" == "back" ]]
+  local v
+  v="$(normalize_input "$1")"
+  [[ "$v" == "b" || "$v" == "back" ]]
 }
 
 is_exit() {
-  local value
-  value="$(normalize_input "$1")"
-  [[ "$value" == "e" || "$value" == "exit" || "$value" == "q" || "$value" == "quit" ]]
+  local v
+  v="$(normalize_input "$1")"
+  [[ "$v" == "e" || "$v" == "exit" || "$v" == "q" || "$v" == "quit" ]]
 }
 
 exit_program() {
@@ -166,63 +160,107 @@ exit_program() {
 is_cookie_issue_text() {
   local text
   text="$(printf "%s" "$1" | tr '[:upper:]' '[:lower:]')"
-
-  [[ "$text" == *cookie* ]] ||
-    [[ "$text" == *"operation not permitted"* ]] ||
-    [[ "$text" == *"permission denied"* ]] ||
-    [[ "$text" == *"full disk access"* ]] ||
-    [[ "$text" == *"database is locked"* ]]
+  [[ "$text" == *cookie*                    ]] ||
+  [[ "$text" == *"operation not permitted"* ]] ||
+  [[ "$text" == *"permission denied"*       ]] ||
+  [[ "$text" == *"full disk access"*        ]] ||
+  [[ "$text" == *"database is locked"*      ]]
 }
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
-    fail "Missing command: $1. Open a new terminal window and try again, or run ./install.sh to (re)install it."
+    fail "Missing: $1. Open a new terminal and try again, or run ./install.sh."
   fi
 }
 
+# ── URL validation ────────────────────────────────────────────────────────────
+# Rejects bare domains, homepages, and known non-downloadable YouTube pages.
+# Only URLs with a real content path or query are accepted.
 is_valid_url() {
   local url="$1"
 
-  if [[ ! "$url" =~ ^https?:// ]]; then
-    return 1
-  fi
+  # Must be HTTP(S)
+  [[ "$url" =~ ^https?:// ]] || return 1
+
+  # Extract host (everything between :// and first /, ?, or end)
+  local rest="${url#*://}"
+  local host="${rest%%/*}"
+  local after_host="${rest#"$host"}"
+
+  # Strip optional port
+  host="${host%%:*}"
+
+  # Host must be a real dotted domain
+  [[ "$host" == *.* ]] || return 1
+
+  # Must have more than just a bare domain or trailing slash
+  case "$after_host" in
+    ""|"/") return 1 ;;
+  esac
+
+  # Reject known YouTube non-content pages
+  local lh lp
+  lh="$(printf "%s" "$host"        | tr '[:upper:]' '[:lower:]')"
+  lp="$(printf "%s" "$after_host"  | tr '[:upper:]' '[:lower:]')"
+
+  case "$lh" in
+    youtube.com|www.youtube.com|m.youtube.com)
+      case "$lp" in
+        /|/feed|/feed/*|/feed\?*|/results|/results/*|/results\?*|/gaming|/trending|/explore)
+          return 1 ;;
+      esac
+      ;;
+    youtu.be|www.youtu.be)
+      # Must have a video ID path segment
+      [[ "$lp" =~ ^/[a-z0-9_-]{2,} ]] || return 1
+      ;;
+  esac
 
   return 0
 }
 
-clear_line() {
-  printf "\r\033[K"
+# ── yt-dlp update command detection ──────────────────────────────────────────
+# Inspects the yt-dlp binary path to determine how it was installed,
+# then returns the correct update command for that install method.
+ytdlp_update_command() {
+  local path
+  path="$(command -v yt-dlp 2>/dev/null)" || { printf "yt-dlp -U"; return; }
+  case "$path" in
+    /opt/homebrew/*|/usr/local/Cellar/*|/home/linuxbrew/*)
+      printf "brew upgrade yt-dlp" ;;
+    */pipx/*)
+      printf "pipx upgrade yt-dlp" ;;
+    */site-packages/*|*/dist-packages/*)
+      printf "pip3 install -U yt-dlp" ;;
+    *)
+      printf "yt-dlp -U" ;;
+  esac
 }
+
+# ── Progress bar ──────────────────────────────────────────────────────────────
+clear_line() { printf "\r\033[K"; }
 
 render_bar() {
   local percent="$1"
   local whole="${percent%.*}"
   local filled empty bar i
 
-  if [[ ! "$whole" =~ ^[0-9]+$ ]]; then
-    whole=0
-  fi
-
-  if (( whole > 100 )); then
-    whole=100
-  fi
+  [[ "$whole" =~ ^[0-9]+$ ]] || whole=0
+  (( whole > 100 )) && whole=100
 
   filled=$(( whole * BAR_WIDTH / 100 ))
   empty=$(( BAR_WIDTH - filled ))
   bar=""
 
-  for ((i = 0; i < filled; i++)); do
-    bar+="#"
-  done
-
-  for ((i = 0; i < empty; i++)); do
-    bar+="-"
-  done
+  for ((i = 0; i < filled; i++)); do bar+="#"; done
+  for ((i = 0; i < empty;  i++)); do bar+="-"; done
 
   clear_line
   printf "%sDownloading%s [%s%s%s] %6s%%" "$ACCENT" "$RESET" "$YELLOW" "$bar" "$RESET" "$percent"
 }
 
+# Filters yt-dlp's output: shows the progress bar, warnings, and errors.
+# All bracket-prefixed internal status lines are suppressed.
 render_progress() {
   local line percent
   local printed_progress=0
@@ -230,20 +268,18 @@ render_progress() {
   while IFS= read -r line; do
     line="${line//$'\r'/}"
 
-    if [[ "$line" =~ ERROR: ]]; then
+    if [[ "$line" =~ ^ERROR: ]]; then
       if is_cookie_issue_text "$line"; then
         clear_line
         warn "Browser cookies could not be loaded."
         continue
       fi
-
-      DOWNLOAD_HAS_ERRORS=1
       clear_line
       printf "%s%s%s\n" "$RED" "$line" "$RESET"
       continue
     fi
 
-    if [[ "$line" =~ WARNING: ]]; then
+    if [[ "$line" =~ ^WARNING: ]]; then
       clear_line
       printf "%s%s%s\n" "$YELLOW" "$line" "$RESET"
       continue
@@ -256,42 +292,31 @@ render_progress() {
       continue
     fi
 
-    case "$line" in
-      *"[download] Downloading item "*|*"[download] Destination:"*|*"[download] Finished downloading playlist:"*)
-        clear_line
-        printf "%s%s%s\n" "$DIM" "$line" "$RESET"
-        ;;
-      *"Deleting original file "*|*"[Metadata]"*|*"[ExtractAudio]"*|*"[Merger]"*)
-        clear_line
-        printf "%s%s%s\n" "$DIM" "$line" "$RESET"
-        ;;
-      "")
-        ;;
-      *)
-        clear_line
-        printf "%s\n" "$line"
-        ;;
-    esac
+    # Suppress everything else — bracket lines, cookie messages,
+    # "Deleting original file", "Extracted N cookies", etc.
   done
 
-  if (( printed_progress == 1 )); then
-    printf "\n"
-  fi
+  (( printed_progress == 1 )) && printf "\n"
 }
 
+# ── yt-dlp runner ─────────────────────────────────────────────────────────────
+# Creates a tracked temp file and stores its path in _YTMT_LAST_TEMP_FILE.
+# It must NOT be called via command substitution: the _YTMT_TEMP_FILES+=()
+# append (and any fail() exit) would run in a subshell and be discarded,
+# defeating the EXIT-trap cleanup. Callers read _YTMT_LAST_TEMP_FILE instead.
 create_temp_file() {
-  local temp_file
-  temp_file="$(mktemp "${TMPDIR:-/tmp}/yt-dlp-media-tools.XXXXXX")" || fail "Could not create temporary file."
-  chmod 600 "$temp_file"
-  _YTMT_TEMP_FILES+=("$temp_file")
-  printf "%s" "$temp_file"
+  local f
+  f="$(mktemp "${TMPDIR:-/tmp}/yt-dlp-media-tools.XXXXXX")" || fail "Could not create temporary file."
+  chmod 600 "$f"
+  _YTMT_TEMP_FILES+=("$f")
+  _YTMT_LAST_TEMP_FILE="$f"
 }
 
 run_ytdlp() {
   local status
   local temp_output
-
-  temp_output="$(create_temp_file)"
+  create_temp_file
+  temp_output="$_YTMT_LAST_TEMP_FILE"
 
   yt-dlp "$@" 2>&1 | tee "$temp_output" | render_progress
   status="${PIPESTATUS[0]}"
@@ -299,12 +324,16 @@ run_ytdlp() {
   DOWNLOAD_HAS_ERRORS=0
   COOKIE_ERROR_DETECTED=0
 
-  if grep -q "^ERROR:" "$temp_output" 2>/dev/null; then
-    if grep -Eiq "cookie|permission denied|full disk access|database is locked" "$temp_output" 2>/dev/null; then
-      COOKIE_ERROR_DETECTED=1
-    else
-      DOWNLOAD_HAS_ERRORS=1
-    fi
+  # Error state is read from the temp file, not from render_progress.
+  # render_progress runs in a subshell (last stage of a pipe), so any
+  # variable assignments inside it are discarded when the subshell exits.
+  # The cookie grep is anchored to ^ERROR: lines to prevent WARNING lines
+  # that mention "cookie" from triggering a false COOKIE_ERROR_DETECTED.
+  if grep -Eiq "^ERROR:.*(cookie|operation not permitted|permission denied|full disk access|database is locked)" \
+      "$temp_output" 2>/dev/null; then
+    COOKIE_ERROR_DETECTED=1
+  elif grep -q "^ERROR:" "$temp_output" 2>/dev/null; then
+    DOWNLOAD_HAS_ERRORS=1
   fi
 
   if [[ "${YTMT_KEEP_LOG:-0}" == "1" ]]; then
@@ -315,19 +344,54 @@ run_ytdlp() {
   return "$status"
 }
 
+# ── Cookie check ──────────────────────────────────────────────────────────────
+check_browser_cookie_access() {
+  local browser="$1"
+  local temp_output status
+
+  create_temp_file
+  temp_output="$_YTMT_LAST_TEMP_FILE"
+
+  printf "Checking cookies from %s..." "$browser"
+  yt-dlp --cookies-from-browser "$browser" --simulate --skip-download \
+    --no-playlist --no-warnings "$URL" >"$temp_output" 2>&1
+  status=$?
+  clear_line
+
+  if grep -Eiq \
+    "ERROR:.*cookie|cookies?.*(not found|could not|failed|permission|denied)|operation not permitted|database is locked|full disk access|extracted 0 cookies" \
+    "$temp_output" 2>/dev/null; then
+    return 1
+  fi
+
+  [[ "$status" -ne 0 ]] && return 2
+
+  return 0
+}
+
+# ── ffmpeg guard ──────────────────────────────────────────────────────────────
+ensure_ffmpeg_available() {
+  [[ "$FFMPEG_AVAILABLE" -eq 1 ]] && return 0
+
+  if [[ "$FFMPEG_WARNING_SHOWN" -eq 0 ]]; then
+    warn "This mode requires ffmpeg, which was not found."
+    warn "Run ./install.sh to install ffmpeg, then try again."
+    FFMPEG_WARNING_SHOWN=1
+  fi
+
+  return 1
+}
+
+# ── Prompt: save location (step 1) ───────────────────────────────────────────
 prompt_save_location() {
   local input
 
   while true; do
-    section "1/4" "Choose save location"
-    printf "Default folder: %s\n\n" "$DEFAULT_DOWNLOAD_PATH"
-    printf "Type %sexit%s to close the program.\n\n" "$BOLD" "$RESET"
-    printf "%sExamples:%s\n" "$DIM" "$RESET"
-    printf "  ~/Desktop\n"
-    printf "  ~/Downloads\n"
-    printf "  /Users/yourname/Music\n\n"
+    section "1/4" "Save location"
+    printf "Default: %s\n\n" "$DEFAULT_DOWNLOAD_PATH"
+    printf "%sexit%s\n\n" "$DIM" "$RESET"
 
-    read -r -p "Save location [press ENTER for Desktop]: " input
+    read -r -p "Path [Enter for Desktop]: " input
 
     if is_exit "$input"; then
       exit_program
@@ -337,43 +401,46 @@ prompt_save_location() {
     MUSIC_PATH="${MUSIC_PATH/#\~/$HOME}"
 
     if [[ -d "$MUSIC_PATH" ]] && [[ -w "$MUSIC_PATH" ]]; then
-      ok "Files will be saved to: $MUSIC_PATH"
+      ok "Saving to: $MUSIC_PATH"
+      printf "\n"
+      local archive_input
+      read -r -p "Skip already-downloaded files? (Y/n): " archive_input
+      if is_back "$archive_input"; then printf "\n"; continue; fi
+      case "$(normalize_input "$archive_input")" in
+        n|no) ARCHIVE_ENABLED=0 ;;
+        *)    ARCHIVE_ENABLED=1 ;;
+      esac
       return 0
     fi
 
-    warn "Folder does not exist or is not writable: $MUSIC_PATH"
-    warn "Please enter an existing, writable folder."
+    warn "Folder not found or not writable: $MUSIC_PATH"
     printf "\n"
   done
 }
 
+# ── Prompt: URL (step 2) ──────────────────────────────────────────────────────
 prompt_url() {
   local input
 
   while true; do
-    section "2/4" "Paste playlist or video URL"
-    printf "Type %sback%s to return to the previous step, or %sexit%s to close.\n\n" "$BOLD" "$RESET" "$BOLD" "$RESET"
+    section "2/4" "Video or playlist URL"
+    nav_hint
 
     read -r -p "URL: " input
 
-    if is_exit "$input"; then
-      exit_program
-    fi
-
-    if is_back "$input"; then
-      return 1
-    fi
+    if is_exit "$input"; then exit_program; fi
+    if is_back "$input"; then return 1; fi
 
     input="$(trim_input "$input")"
 
     if [[ -z "$input" ]]; then
-      warn "URL cannot be empty. Please try again."
+      warn "URL cannot be empty."
       printf "\n"
       continue
     fi
 
     if ! is_valid_url "$input"; then
-      warn "Invalid URL. It must start with http:// or https://."
+      warn "Invalid URL. Paste the full link to a video or playlist."
       printf "\n"
       continue
     fi
@@ -384,31 +451,26 @@ prompt_url() {
   done
 }
 
+# ── Prompt: download mode (step 3) ───────────────────────────────────────────
 prompt_download_mode() {
   local input
 
   while true; do
-    section "3/4" "Choose download mode"
-    printf "Type %sback%s to return to the previous step, or %sexit%s to close.\n\n" "$BOLD" "$RESET" "$BOLD" "$RESET"
-    printf "  %s1%s) MP4   - Best video quality\n" "$ACCENT" "$RESET"
-    printf "  %s2%s) WEBM  - Native YouTube quality, thumbnail saved separately\n" "$ACCENT" "$RESET"
-    printf "  %s3%s) MP3   - Maximum compatibility\n" "$ACCENT" "$RESET"
-    printf "  %s4%s) M4A   - Good audio quality\n" "$ACCENT" "$RESET"
-    printf "  %s5%s) FLAC  - No thumbnail image; does not improve source quality\n\n" "$ACCENT" "$RESET"
-    printf "%sFLAC note:%s FLAC is lossless, but it cannot make YouTube/audio-stream quality better than the original source.\n\n" "$YELLOW" "$RESET"
+    section "3/4" "Download mode"
+    nav_hint
+    printf "  %s1%s) MP4   Best video quality\n"                          "$ACCENT" "$RESET"
+    printf "  %s2%s) WEBM  Native YouTube quality, thumbnail saved as JPG\n" "$ACCENT" "$RESET"
+    printf "  %s3%s) MP3   Maximum compatibility\n"                       "$ACCENT" "$RESET"
+    printf "  %s4%s) M4A   Good audio quality\n"                          "$ACCENT" "$RESET"
+    printf "  %s5%s) FLAC  Lossless (no thumbnail)\n\n"                   "$ACCENT" "$RESET"
 
-    read -r -p "Select option (1-5): " input
+    read -r -p "Select (1-5): " input
 
-    if is_exit "$input"; then
-      exit_program
-    fi
-
-    if is_back "$input"; then
-      return 1
-    fi
+    if is_exit "$input"; then exit_program; fi
+    if is_back "$input"; then return 1; fi
 
     if [[ ! "$input" =~ ^[1-5]$ ]]; then
-      warn "Invalid option. Choose a number between 1 and 5."
+      warn "Choose a number between 1 and 5."
       printf "\n"
       continue
     fi
@@ -416,23 +478,17 @@ prompt_download_mode() {
     CHOICE="$input"
 
     case "$CHOICE" in
-      1) MODE_NAME="MP4 video" ;;
+      1) MODE_NAME="MP4 video"  ;;
       2) MODE_NAME="WEBM video" ;;
-      3) MODE_NAME="MP3 audio" ;;
-      4) MODE_NAME="M4A audio" ;;
+      3) MODE_NAME="MP3 audio"  ;;
+      4) MODE_NAME="M4A audio"  ;;
       5) MODE_NAME="FLAC audio" ;;
     esac
 
-    ok "Selected mode: $MODE_NAME"
+    ok "Mode: $MODE_NAME"
 
-    if [[ "$CHOICE" == "2" ]]; then
-      warn "WEBM mode saves the thumbnail separately as a JPG."
-      warn "WEBM mode uses only WEBM video/audio streams to avoid broken video merges."
-    fi
-
-    if [[ "$CHOICE" == "5" ]]; then
-      warn "FLAC mode does not save or embed thumbnail images."
-    fi
+    [[ "$CHOICE" == "2" ]] && warn "WEBM: thumbnail saved separately as JPG."
+    [[ "$CHOICE" == "5" ]] && warn "FLAC: no thumbnail. Source quality cannot be improved."
 
     if ! ensure_ffmpeg_available; then
       printf "\n"
@@ -443,6 +499,7 @@ prompt_download_mode() {
   done
 }
 
+# ── Prompt: y/n ───────────────────────────────────────────────────────────────
 prompt_yes_no() {
   local question="$1"
   local input
@@ -450,87 +507,38 @@ prompt_yes_no() {
   while true; do
     read -r -p "$question (y/n): " input
 
-    if is_exit "$input"; then
-      exit_program
-    fi
+    if is_exit "$input"; then exit_program; fi
 
-    input="$(normalize_input "$input")"
-
-    case "$input" in
-      y|yes)
-        return 0
-        ;;
-      n|no|"")
-        return 1
-        ;;
-      *)
-        warn "Please type y or n."
-        ;;
+    case "$(normalize_input "$input")" in
+      y|yes)   return 0 ;;
+      n|no|"") return 1 ;;
+      *)        warn "Type y or n." ;;
     esac
   done
 }
 
-check_browser_cookie_access() {
-  local browser="$1"
-  local temp_output
-  local status
-
-  temp_output="$(create_temp_file)"
-
-  yt-dlp --cookies-from-browser "$browser" --simulate --skip-download --no-playlist --no-warnings "$URL" >"$temp_output" 2>&1
-  status=$?
-
-  if grep -Eiq "ERROR:.*cookie|cookies?.*(not found|could not|failed|permission|denied)|operation not permitted|database is locked|full disk access|extracted 0 cookies" "$temp_output" 2>/dev/null; then
-    return 1
-  fi
-
-  if [[ "$status" -ne 0 ]]; then
-    return 2
-  fi
-
-  return 0
-}
-
-ensure_ffmpeg_available() {
-  if [[ "$FFMPEG_AVAILABLE" -eq 1 ]]; then
-    return 0
-  fi
-
-  if [[ "$FFMPEG_WARNING_SHOWN" -eq 0 ]]; then
-    warn "This download mode requires ffmpeg, which was not found."
-    warn "Run ./install.sh to install ffmpeg, then try again."
-    FFMPEG_WARNING_SHOWN=1
-  fi
-
-  return 1
-}
-
+# ── Prompt: browser cookies (step 4) ─────────────────────────────────────────
 prompt_cookies() {
   local input
 
   while true; do
     section "4/4" "Browser cookies"
-    printf "Cookies are optional. They help with restricted videos, private videos, large playlists, and rate limits.\n\n"
-    printf "Type %sback%s to return to the previous step, or %sexit%s to close.\n\n" "$BOLD" "$RESET" "$BOLD" "$RESET"
-    printf "  %s0%s) Skip cookies\n" "$ACCENT" "$RESET"
-    printf "  %s1%s) Chrome\n" "$ACCENT" "$RESET"
+    printf "Optional. Helps with restricted videos, large playlists, and rate limits.\n\n"
+    nav_hint
+    printf "  %s0%s) Skip\n"    "$ACCENT" "$RESET"
+    printf "  %s1%s) Chrome\n"  "$ACCENT" "$RESET"
     printf "  %s2%s) Firefox\n" "$ACCENT" "$RESET"
-    printf "  %s3%s) Safari\n" "$ACCENT" "$RESET"
-    printf "  %s4%s) Edge\n" "$ACCENT" "$RESET"
+    printf "  %s3%s) Safari\n"  "$ACCENT" "$RESET"
+    printf "  %s4%s) Edge\n"    "$ACCENT" "$RESET"
     printf "  %s5%s) Brave\n\n" "$ACCENT" "$RESET"
 
-    read -r -p "Select option (0-5): " input
+    read -r -p "Select (0-5): " input
 
-    if is_exit "$input"; then
-      exit_program
-    fi
-
-    if is_back "$input"; then
-      return 1
-    fi
+    if is_exit "$input"; then exit_program; fi
+    if is_back "$input"; then return 1; fi
 
     if [[ ! "$input" =~ ^[0-5]$ ]]; then
-      warn "Invalid option. Choose a number between 0 and 5."
+      warn "Choose a number between 0 and 5."
       printf "\n"
       continue
     fi
@@ -539,46 +547,37 @@ prompt_cookies() {
     BROWSER=""
 
     case "$input" in
-      0)
-        warn "No cookies selected. Some content may be unavailable."
-        return 0
-        ;;
-      1) BROWSER="chrome" ;;
+      0) return 0 ;;
+      1) BROWSER="chrome"  ;;
       2) BROWSER="firefox" ;;
-      3) BROWSER="safari" ;;
-      4) BROWSER="edge" ;;
-      5) BROWSER="brave" ;;
+      3) BROWSER="safari"  ;;
+      4) BROWSER="edge"    ;;
+      5) BROWSER="brave"   ;;
     esac
-
-    if [[ "$BROWSER" == "safari" ]]; then
-      printf "\n"
-      warn "Safari cookies may be blocked by macOS permissions."
-      printf "If Safari fails, use Chrome, Brave, Edge, or Firefox instead.\n"
-      printf "For Safari cookies, Terminal may need Full Disk Access.\n\n"
-    fi
 
     COOKIE_ARGS=(--cookies-from-browser "$BROWSER")
 
     check_browser_cookie_access "$BROWSER"
     case "$?" in
       0)
-        ok "Cookies will be loaded from: $BROWSER"
+        ok "Cookies loaded from: $BROWSER"
         ;;
       1)
-        warn "No usable cookies were found for: $BROWSER"
-
-        if prompt_yes_no "Download anyway without cookies?"; then
+        warn "No usable cookies found for: $BROWSER"
+        if [[ "$BROWSER" == "safari" ]]; then
+          printf "Safari needs Full Disk Access for Terminal.\n"
+          printf "System Settings → Privacy & Security → Full Disk Access\n\n"
+        fi
+        if prompt_yes_no "Continue without cookies?"; then
           COOKIE_ARGS=()
           BROWSER=""
-          warn "Continuing without cookies."
           return 0
         fi
-
         printf "\n"
         continue
         ;;
       2)
-        warn "Cookie check was inconclusive, but the download can still try using $BROWSER."
+        warn "Cookie check inconclusive — will attempt download with $BROWSER."
         ;;
     esac
 
@@ -586,13 +585,16 @@ prompt_cookies() {
   done
 }
 
+# ── Build yt-dlp argument arrays ─────────────────────────────────────────────
 build_ytdlp_args() {
-  OUTPUT_TEMPLATE="%(playlist_index&{:03d} - |)s%(artist,uploader,creator,channel|Unknown Artist)s - %(title|Untitled)s.%(ext)s"
+  # Prefix the output template with MUSIC_PATH so files always land in the
+  # user-selected folder regardless of the script's working directory.
+  local template
+  template="$MUSIC_PATH/%(playlist_index&{:03d} - |)s%(artist,uploader,creator,channel|Unknown Artist)s - %(title|Untitled)s.%(ext)s"
 
   COMMON_ARGS=(
     --yes-playlist
-    "${COOKIE_ARGS[@]}"
-    --download-archive "archive.txt"
+    ${COOKIE_ARGS[@]+"${COOKIE_ARGS[@]}"}
     --ignore-errors
     --retries 20
     --fragment-retries 20
@@ -600,9 +602,12 @@ build_ytdlp_args() {
     --windows-filenames
     --newline
     --no-color
-    --no-keep-video
-    -o "$OUTPUT_TEMPLATE"
+    -o "$template"
   )
+
+  if [[ "$ARCHIVE_ENABLED" -eq 1 ]]; then
+    COMMON_ARGS+=(--download-archive "$MUSIC_PATH/archive.txt")
+  fi
 
   case "$CHOICE" in
     1)
@@ -628,6 +633,7 @@ build_ytdlp_args() {
         -x
         --audio-format mp3
         --audio-quality 0
+        --no-keep-video
         --embed-thumbnail
         --add-metadata
       )
@@ -637,6 +643,7 @@ build_ytdlp_args() {
         -f bestaudio
         -x
         --audio-format m4a
+        --no-keep-video
         --embed-thumbnail
         --add-metadata
       )
@@ -646,12 +653,14 @@ build_ytdlp_args() {
         -f bestaudio
         -x
         --audio-format flac
+        --no-keep-video
         --add-metadata
       )
       ;;
   esac
 }
 
+# ── One download session ──────────────────────────────────────────────────────
 download_once() {
   local step=1
 
@@ -674,6 +683,7 @@ download_once() {
         if prompt_url; then
           step=3
         else
+          print_header
           step=1
         fi
         ;;
@@ -681,6 +691,7 @@ download_once() {
         if prompt_download_mode; then
           step=4
         else
+          print_header
           step=2
         fi
         ;;
@@ -688,6 +699,7 @@ download_once() {
         if prompt_cookies; then
           break
         else
+          print_header
           step=3
         fi
         ;;
@@ -695,18 +707,14 @@ download_once() {
   done
 
   if ! [[ -d "$MUSIC_PATH" ]] || ! [[ -w "$MUSIC_PATH" ]]; then
-    fail "Folder no longer exists or is not writable: $MUSIC_PATH"
-  fi
-
-  if ! cd "$MUSIC_PATH"; then
-    fail "Could not open folder: $MUSIC_PATH"
+    fail "Save folder no longer exists or is not writable: $MUSIC_PATH"
   fi
 
   build_ytdlp_args
 
   section "RUN" "Starting download"
-  printf "Save folder : %s\n" "$MUSIC_PATH"
-  printf "Mode        : %s\n\n" "$MODE_NAME"
+  printf "Folder : %s\n" "$MUSIC_PATH"
+  printf "Format : %s\n\n" "$MODE_NAME"
 
   while true; do
     COOKIE_ERROR_DETECTED=0
@@ -717,14 +725,12 @@ download_once() {
 
     if [[ "$COOKIE_ERROR_DETECTED" -eq 1 && "${#COOKIE_ARGS[@]}" -gt 0 ]]; then
       printf "\n"
-      warn "Browser cookies could not be loaded from: $BROWSER"
-
-      if prompt_yes_no "Download anyway without cookies?"; then
+      warn "Cookie error with: $BROWSER"
+      if prompt_yes_no "Retry without cookies?"; then
         COOKIE_ARGS=()
         BROWSER=""
         build_ytdlp_args
         printf "\n"
-        warn "Retrying without cookies."
         continue
       fi
     fi
@@ -740,62 +746,47 @@ download_once() {
   else
     print_box "DOWNLOAD FINISHED WITH ERRORS"
     warn "Some items may not have downloaded correctly."
-    warn "Try another browser cookie option, update yt-dlp, or check TROUBLESHOOTING.md."
+    warn "To update yt-dlp: $(ytdlp_update_command)"
+    warn "See TROUBLESHOOTING.md for help."
   fi
 
   if [[ -n "$LAST_LOG_PATH" ]]; then
-    printf "%s[INFO]%s Full yt-dlp log saved to: %s\n" "$BLUE" "$RESET" "$LAST_LOG_PATH"
+    printf "%s[INFO]%s Log saved to: %s\n" "$BLUE" "$RESET" "$LAST_LOG_PATH"
   fi
 }
 
+# ── Continue prompt ───────────────────────────────────────────────────────────
 prompt_continue() {
   local input
 
-  while true; do
-    printf "\n"
-    read -r -p "Do you want to continue downloading? (y/n, or exit): " input
+  printf "\n"
+  read -r -p "Download again? (y/exit): " input
 
-    if is_exit "$input"; then
-      exit_program
-    fi
+  if is_exit "$input"; then
+    exit_program
+  fi
 
-    input="$(normalize_input "$input")"
-
-    case "$input" in
-      y|yes)
-        return 0
-        ;;
-      n|no|"")
-        return 1
-        ;;
-      *)
-        warn "Please type y/n, or exit."
-        ;;
-    esac
-  done
+  case "$(normalize_input "$input")" in
+    n|no) exit_program ;;
+  esac
+  # Enter or y = continue
 }
 
+# ── Entry point ───────────────────────────────────────────────────────────────
 print_header
 
 require_command "yt-dlp"
 
 if ! command -v ffmpeg >/dev/null 2>&1; then
   FFMPEG_AVAILABLE=0
-  warn "ffmpeg was not found. Downloads need ffmpeg for merging, conversion, metadata, and thumbnails."
-  warn "Run ./install.sh before starting a download."
+  warn "ffmpeg not found. All download modes require ffmpeg."
+  warn "Run ./install.sh to install it."
 else
   FFMPEG_AVAILABLE=1
 fi
 
 while true; do
   download_once
-
-  if prompt_continue; then
-    print_header
-    continue
-  fi
-
-  printf "\n"
-  ok "Done. Program closed."
-  break
+  prompt_continue
+  print_header
 done

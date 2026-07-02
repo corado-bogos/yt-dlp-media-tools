@@ -1,76 +1,15 @@
 # yt-dlp-media-tools
 
-A beginner-friendly macOS terminal tool for downloading videos, audio, and playlists from YouTube and other platforms.
+A beginner-friendly macOS terminal tool for downloading videos and audio from YouTube and other platforms. Wraps [yt-dlp](https://github.com/yt-dlp/yt-dlp) in a simple step-by-step interface — no commands to memorize.
 
 [![Shell](https://img.shields.io/badge/shell-bash-blue)](https://www.gnu.org/software/bash/)
-[![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](#requirements)
-[![Version](https://img.shields.io/badge/version-v1.2.0-orange)](CHANGELOG.md)
+[![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](#install)
+[![Version](https://img.shields.io/badge/version-v1.2.1-orange)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-Personal%20Use-green)](LICENSE.md)
 
 ---
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Requirements](#requirements)
-- [Quick Install](#quick-install)
-- [Manual Installation](#manual-installation)
-- [Updating](#updating)
-- [Uninstall](#uninstall)
-- [Usage](#usage)
-- [Download Formats](#download-formats)
-- [Output Structure](#output-structure)
-- [Archive Tracking](#archive-tracking)
-- [Optional Logs](#optional-logs)
-- [Environment Variables](#environment-variables)
-- [Screenshots](#screenshots)
-- [Support](#support)
-- [License](#license)
-
----
-
-## Overview
-
-**yt-dlp-media-tools** is a simple interactive shell script that wraps the powerful [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) tool into an easy step-by-step macOS experience — no technical knowledge needed.
-
-It lets you download:
-
-- Videos (`MP4`, `WEBM`)
-- Audio (`MP3`, `M4A`, `FLAC`)
-- Full playlists
-
-This project supports **macOS only**.
-
----
-
-## Features
-
-- Interactive step-by-step prompts — no commands to memorize
-- 5 download formats: MP4, WEBM, MP3, M4A, FLAC
-- Works with single videos and full playlists
-- Files named automatically with artist/uploader and title
-- Playlist numbering added when a playlist index exists
-- Skips already-downloaded files automatically via `archive.txt`
-- Optional browser cookies from Chrome, Firefox, Safari, Edge, or Brave
-- Thumbnails embedded or saved separately depending on the format
-- Automatic retry on failed downloads
-- One-line install — sets everything up from scratch, including Homebrew
-- Global `ytmt` command — run the tool from any folder after install
-
----
-
-## Requirements
-
-- macOS
-- Terminal
-- Internet connection
-
-The installer handles everything else — Apple Command Line Tools, Homebrew, `git`, `yt-dlp`, and `ffmpeg` — with a `[y/N]` confirmation before installing anything.
-
----
-
-## Quick Install
+## Install
 
 Open Terminal and run:
 
@@ -78,57 +17,15 @@ Open Terminal and run:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
 ```
 
-This one command will:
+The installer handles everything: Apple Command Line Tools, Homebrew, `yt-dlp`, and `ffmpeg`. Each step asks before installing anything.
 
-1. Confirm you are on macOS
-2. Check for Apple Command Line Tools — offer to install if missing
-3. Check for Homebrew — offer to install if missing
-4. Ask before installing `git`, `yt-dlp`, and `ffmpeg` if missing
-5. Download the project into `~/.local/share/yt-dlp-media-tools`
-6. Verify that `yt-dlp` and `ffmpeg` actually run
-7. Create a global `ytmt` command, available from any folder
-
-Each step asks a `[y/N]` question. Type `y` and press Enter to continue.
-
-Once finished, start the tool from any terminal window:
+Then start from any terminal window:
 
 ```bash
 ytmt
 ```
 
----
-
-### Unattended Install
-
-To auto-confirm every installer prompt:
-
-```bash
-YTMT_ASSUME_YES=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
-```
-
-> Homebrew and macOS may still ask for a password or require Apple Command Line Tools interaction depending on your system.
-
----
-
-### Custom Install Path
-
-To install into a different directory:
-
-```bash
-YTMT_INSTALL_DIR="$HOME/my-tools/yt-dlp-media-tools" bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
-```
-
----
-
-### Security Note
-
-Piping `curl | bash` runs a remote script directly on your machine. If you prefer to review the code first, read [install.sh](install.sh), then use the [manual installation](#manual-installation) method instead.
-
----
-
-## Manual Installation
-
-Clone the repository and run the installer locally:
+**Manual install:**
 
 ```bash
 git clone https://github.com/corado-bogos/yt-dlp-media-tools
@@ -137,203 +34,79 @@ chmod +x install.sh
 ./install.sh
 ```
 
-The installer will check for and install missing macOS dependencies through Homebrew, create the global `ytmt` command, and update your shell profile.
-
----
-
-## Updating
-
-Re-run the same one-line command at any time:
+**Unattended install:**
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
+YTMT_ASSUME_YES=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
 ```
 
-The installer detects an existing installation at `~/.local/share/yt-dlp-media-tools`, pulls the latest changes with `git pull --ff-only`, and re-runs the local setup.
-
-If you have local edits in that folder, commit or stash them first. The installer will not overwrite local changes with destructive Git commands.
-
----
-
-## Uninstall
-
-Remove the project and the global command:
-
-```bash
-rm -rf ~/.local/share/yt-dlp-media-tools
-rm -f ~/.local/bin/ytmt
-```
-
-Then remove the installer block from your shell profile (`~/.zprofile`, `~/.zshrc`, `~/.bash_profile`, or `~/.bashrc`):
-
-```text
-# >>> yt-dlp-media-tools installer >>>
-...
-# <<< yt-dlp-media-tools installer <<<
-```
+> Piping `curl | bash` runs a remote script on your machine. Read [install.sh](install.sh) first if you prefer.
 
 ---
 
 ## Usage
 
-After installation, run from any folder:
+The tool walks you through four steps: save location, URL, format, and browser cookies. Back and exit are available at every step.
+
+---
+
+## Formats
+
+| # | Format | Type  | Thumbnail         |
+|---|--------|-------|-------------------|
+| 1 | MP4    | Video | Embedded          |
+| 2 | WEBM   | Video | Saved as `.jpg`   |
+| 3 | MP3    | Audio | Embedded          |
+| 4 | M4A    | Audio | Embedded          |
+| 5 | FLAC   | Audio | None              |
+
+> FLAC is lossless but cannot improve quality beyond the original compressed source.
+
+---
+
+## Output
+
+Files are saved to the folder you choose at startup. Playlist items include a zero-padded index:
+
+```
+001 - Artist - Title.mp3
+002 - Artist - Title.mp3
+```
+
+---
+
+## Archive tracking
+
+After the first run, an `archive.txt` file is created in your save folder. Subsequent runs on the same URL skip already-downloaded items automatically. You can disable this at startup.
+
+To reset: delete or move `archive.txt`.
+
+---
+
+## Update
+
+Re-run the install command at any time:
 
 ```bash
-ytmt
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
 ```
 
-Or from inside the project folder:
+---
+
+## Uninstall
 
 ```bash
-./yt-dlp-media-tools.sh
+~/.local/share/yt-dlp-media-tools/uninstall.sh
 ```
 
-The tool walks you through 4 steps.
-
 ---
 
-### Step 1 — Save Location
+## Options
 
-Press Enter to use your Desktop, or paste a path to any existing folder.
-
-```text
-~/Desktop
-~/Downloads
-/Users/yourname/Music
-```
-
-> **macOS tip:** In Finder, hold `Option`, right-click a folder, and choose **Copy as Pathname** to get the exact path.
-
-You can type `back` at any later step to return to the previous one, or `exit` at any prompt to close the tool.
-
----
-
-### Step 2 — URL
-
-Paste a single video URL or a full playlist URL. The URL must start with `http://` or `https://`. If the URL is invalid, the tool asks again instead of closing.
-
----
-
-### Step 3 — Download Mode
-
-```text
-1) MP4  - Best video quality
-2) WEBM - Native YouTube quality, thumbnail saved separately
-3) MP3  - Maximum compatibility
-4) M4A  - Good audio quality
-5) FLAC - No thumbnail; does not improve source quality
-```
-
-All modes require `ffmpeg`. If it is missing, run `./install.sh`.
-
----
-
-### Step 4 — Browser Cookies
-
-```text
-0) Skip cookies
-1) Chrome
-2) Firefox
-3) Safari
-4) Edge
-5) Brave
-```
-
-Cookies are optional. They help with age-restricted videos, login-required content, large playlists, and YouTube rate limits. If cookie loading fails, the tool asks whether to continue without them.
-
-> **Safari note:** Safari may require Full Disk Access for Terminal in System Settings → Privacy & Security. If Safari fails, use Chrome, Brave, Edge, or Firefox.
-
----
-
-## Download Formats
-
-### Video
-
-| Mode | Format | Thumbnail |
-|---|---|---|
-| 1 | MP4 | Embedded when supported |
-| 2 | WEBM | Saved separately as `.jpg` |
-
-Both modes download the best available streams, merge them, and embed metadata.
-
-### Audio
-
-| Mode | Format | Best for | Thumbnail |
-|---|---|---|---|
-| 3 | MP3 | Universal — cars, phones, speakers | Embedded when supported |
-| 4 | M4A | Good quality, smaller files | Embedded when supported |
-| 5 | FLAC | Lossless conversion from source | Not embedded |
-
-> **FLAC note:** FLAC is lossless, but it cannot improve quality beyond the original compressed source audio.
-
----
-
-## Output Structure
-
-Playlist downloads include an index number:
-
-```text
-Music/
-├── 001 - Artist - Song Title.mp3
-├── 002 - Artist - Song Title.mp3
-└── 003 - Artist - Song Title.mp3
-```
-
-Single video downloads omit the index:
-
-```text
-Music/
-└── Artist - Song Title.mp4
-```
-
-If artist or uploader metadata is missing, the tool uses a safe fallback instead of generating an empty filename.
-
----
-
-## Archive Tracking
-
-After the first run, the tool creates `archive.txt` in your save folder. This file records every downloaded item. Running the tool again on the same playlist automatically skips files you already downloaded.
-
-To re-download a file, remove its line from `archive.txt` or delete the file to reset the entire history.
-
----
-
-## Optional Logs
-
-By default, the tool keeps the terminal output clean. To save the full `yt-dlp` output from the latest run:
-
-```bash
-YTMT_KEEP_LOG=1 ytmt
-```
-
-The log is saved as `ytmt-last-run.log` in your selected download folder.
-
----
-
-## Environment Variables
-
-The tool respects the following environment variables:
-
-| Variable | Default | Description |
-|---|---|---|
-| `YTMT_KEEP_LOG` | `0` | Set to `1` to save full `yt-dlp` output as `ytmt-last-run.log` in the download folder |
-| `YTMT_ASSUME_YES` | `0` | Set to `1` to auto-confirm all installer prompts (unattended install only) |
-| `YTMT_INSTALL_DIR` | `$HOME/.local/share/yt-dlp-media-tools` | Override the installation directory |
-| `YTMT_BIN_DIR` | `$HOME/.local/bin` | Override where the `ytmt` symlink is created |
-| `YTMT_NO_SHELL_RELOAD` | `0` | Set to `1` to skip shell reload after install |
-
-**Examples:**
-
-```bash
-# Save the last run log
-YTMT_KEEP_LOG=1 ytmt
-
-# Fully unattended install
-YTMT_ASSUME_YES=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
-
-# Custom install location
-YTMT_INSTALL_DIR="$HOME/my-tools/yt-dlp-media-tools" bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
-```
+| Variable        | Default | Description                                          |
+|-----------------|---------|------------------------------------------------------|
+| `YTMT_KEEP_LOG` | `0`     | Set to `1` to save the full yt-dlp log to the download folder |
+| `YTMT_ASSUME_YES` | `0`   | Set to `1` to auto-confirm installer prompts         |
 
 ---
 
@@ -353,18 +126,12 @@ YTMT_INSTALL_DIR="$HOME/my-tools/yt-dlp-media-tools" bash -c "$(curl -fsSL https
 
 ## Support
 
-For bugs or questions, open an issue:
-https://github.com/corado-bogos/yt-dlp-media-tools/issues
-
-For common fixes, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
-
-Private contact: `corado.dev@icloud.com`
+- Issues: https://github.com/corado-bogos/yt-dlp-media-tools/issues
+- Troubleshooting: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+- Contact: corado.dev@icloud.com
 
 ---
 
 ## License
 
-This project is for **personal and educational use only** under a custom license.
-It is **not** an OSI-approved open-source license.
-
-See [LICENSE.md](LICENSE.md) for full terms.
+Personal and educational use only. See [LICENSE.md](LICENSE.md).
