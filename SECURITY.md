@@ -63,7 +63,7 @@ If you discover a security issue, please report it **privately** — do not open
 Preferred channels:
 
 - **GitHub private vulnerability reporting**: go to the repository's **Security** tab → **Report a vulnerability**.
-- **Email**: corado.dev@icloud.com
+- **Email**: corado.dev@gmail.com
 
 When reporting, please include:
 - Clear description of the issue
