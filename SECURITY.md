@@ -58,11 +58,12 @@ We recommend:
 
 ## Reporting a Vulnerability
 
-If you discover a security issue, please report it responsibly.
+If you discover a security issue, please report it **privately** — do not open a public issue, as that would disclose the problem before it can be fixed.
 
-You can report issues via:
+Preferred channels:
 
-- GitHub Issues: https://github.com/corado-bogos/yt-dlp-media-tools/issues
+- **GitHub private vulnerability reporting**: go to the repository's **Security** tab → **Report a vulnerability**.
+- **Email**: corado.dev@icloud.com
 
 When reporting, please include:
 - Clear description of the issue

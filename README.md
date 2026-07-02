@@ -4,7 +4,7 @@ A beginner-friendly macOS terminal tool for downloading videos and audio from Yo
 
 [![Shell](https://img.shields.io/badge/shell-bash-blue)](https://www.gnu.org/software/bash/)
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](#install)
-[![Version](https://img.shields.io/badge/version-v1.2.1-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v1.2.1--beta.3-orange)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-Personal%20Use-green)](LICENSE.md)
 
 ---
@@ -107,6 +107,8 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-medi
 |-----------------|---------|------------------------------------------------------|
 | `YTMT_KEEP_LOG` | `0`     | Set to `1` to save the full yt-dlp log to the download folder |
 | `YTMT_ASSUME_YES` | `0`   | Set to `1` to auto-confirm installer prompts         |
+| `YTMT_INSTALL_DIR` | `~/.local/share/yt-dlp-media-tools` | Installer: custom install directory |
+| `YTMT_BIN_DIR` | `~/.local/bin` | Installer: custom directory for the `ytmt` symlink |
 
 ---
 
