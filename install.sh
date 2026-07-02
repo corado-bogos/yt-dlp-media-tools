@@ -6,13 +6,14 @@ VERSION="1.2.1-beta.3"
 SCRIPT_NAME="yt-dlp-media-tools.sh"
 REQUIRED_COMMANDS=(yt-dlp ffmpeg)
 
-REPO_URL="https://github.com/corado-bogos/yt-dlp-media-tools.git"
+REPO_URL="${YTMT_REPO_URL:-https://github.com/corado-bogos/yt-dlp-media-tools.git}"
 INSTALL_DIR="${YTMT_INSTALL_DIR:-$HOME/.local/share/yt-dlp-media-tools}"
 BIN_DIR="${YTMT_BIN_DIR:-$HOME/.local/bin}"
 COMMAND_NAME="ytmt"
 STEP_NUMBER=0
 HOMEBREW_READY=0
 PROFILE_UPDATED=0
+LOG_FILE="${YTMT_LOG_FILE:-$HOME/.cache/yt-dlp-media-tools/install.log}"
 
 if [[ -t 1 ]] && command -v tput >/dev/null 2>&1; then
   BOLD="$(tput bold)"
@@ -43,8 +44,14 @@ warn() {
 }
 
 fail() {
+  log "ERROR: $1"
   printf "  %s[ERROR]%s %s\n" "$RED" "$RESET" "$1"
   exit 1
+}
+
+log() {
+  mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || return 0
+  printf '%s  %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >> "$LOG_FILE" 2>/dev/null || true
 }
 
 step() {
@@ -456,6 +463,7 @@ run_local_install() {
   setup_global_command
 
   printf "\n"
+  log "installation complete"
   printf "%s==> Done%s\n" "$BOLD$GREEN" "$RESET"
   ok "Installation complete"
   printf "Start the tool:\n\n"
@@ -472,6 +480,7 @@ main() {
   local os_name
 
   print_header
+  log "install started (v$VERSION)"
 
   step "Checking operating system"
   os_name="$(uname -s)"
@@ -481,9 +490,11 @@ main() {
   fi
 
   ok "Detected system: macOS"
+  log "macOS detected"
 
   ensure_macos_command_line_tools
   ensure_homebrew
+  log "command line tools + Homebrew ready"
 
   if [[ -f "$SCRIPT_NAME" ]]; then
     run_local_install

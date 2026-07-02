@@ -7,6 +7,8 @@ A beginner-friendly macOS terminal tool for downloading videos and audio from Yo
 [![Version](https://img.shields.io/badge/version-v1.2.1--beta.3-orange)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-Personal%20Use-green)](LICENSE.md)
 
+> **macOS only.** Not tested or supported on Linux, Windows, or WSL.
+
 ---
 
 ## Install
