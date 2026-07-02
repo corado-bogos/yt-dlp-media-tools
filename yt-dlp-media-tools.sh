@@ -2,7 +2,7 @@
 
 set -uo pipefail
 
-VERSION="1.2.1-beta.3"
+VERSION="1.2.1"
 
 # ── CLI flags ─────────────────────────────────────────────────────────────────
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
@@ -405,6 +405,7 @@ prompt_save_location() {
       printf "\n"
       local archive_input
       read -r -p "Skip already-downloaded files? (Y/n): " archive_input
+      if is_exit "$archive_input"; then exit_program; fi
       if is_back "$archive_input"; then printf "\n"; continue; fi
       case "$(normalize_input "$archive_input")" in
         n|no) ARCHIVE_ENABLED=0 ;;

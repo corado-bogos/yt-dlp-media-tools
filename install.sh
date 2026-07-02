@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-VERSION="1.2.1-beta.3"
+VERSION="1.2.1"
 SCRIPT_NAME="yt-dlp-media-tools.sh"
 REQUIRED_COMMANDS=(yt-dlp ffmpeg)
 
