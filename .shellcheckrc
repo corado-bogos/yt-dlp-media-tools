@@ -1,1 +1,4 @@
-disable=SC2086,SC2181
+# SC2181 - allow checking $? explicitly instead of 'if mycmd;' style
+disable=SC2181
+# NOTE: SC2086 (double-quote to prevent globbing) is intentionally NOT disabled
+# globally. Add per-line shellcheck disable comments where genuinely needed.

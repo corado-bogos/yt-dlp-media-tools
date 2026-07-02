@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-VERSION="1.2.0"
+VERSION="1.2.1-beta.3"
 SCRIPT_NAME="yt-dlp-media-tools.sh"
 REQUIRED_COMMANDS=(yt-dlp ffmpeg)
 
@@ -315,7 +315,8 @@ install_packages() {
 }
 
 confirm_install_packages() {
-  local packages="$*"
+  local packages
+  packages="$*"
 
   if ! prompt_yes_no "Install missing packages now? ($packages)"; then
     fail "Cannot continue without required packages: $packages"
@@ -457,10 +458,9 @@ run_local_install() {
   printf "\n"
   printf "%s==> Done%s\n" "$BOLD$GREEN" "$RESET"
   ok "Installation complete"
-  printf "Project location: %s\n\n" "$PWD"
-  printf "Start the tool from anywhere with:\n\n"
+  printf "Start the tool:\n\n"
   printf "  %s\n\n" "$COMMAND_NAME"
-  printf "(or run %s./%s%s from inside %s)\n\n" "$BOLD" "$SCRIPT_NAME" "$RESET" "$PWD"
+  printf "To update yt-dlp: brew upgrade yt-dlp\n\n"
 
   if [[ "${PROFILE_UPDATED:-0}" -eq 1 ]] && [[ -t 0 ]] && [[ -t 1 ]] && [[ "${YTMT_NO_SHELL_RELOAD:-0}" != "1" ]]; then
     info "Reloading your shell so '$COMMAND_NAME' works right away..."
