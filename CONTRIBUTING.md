@@ -21,7 +21,7 @@ This is a personal learning project, but bug reports, suggestions, and pull requ
 
 Before opening a bug report:
 
-1. Make sure you are on the latest version — re-run the one-line installer to update
+1. Make sure you are on the latest version — update with `brew upgrade ytmt`
 2. Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for a known fix
 3. Search [existing issues](https://github.com/corado-bogos/yt-dlp-media-tools/issues) to avoid duplicates
 
@@ -52,6 +52,15 @@ Open an issue with the label `enhancement` and describe:
 4. Open a pull request with a clear description of what changed and why
 
 Keep pull requests focused — one change per PR makes review easier.
+
+**Run from source:**
+
+```bash
+chmod +x yt-dlp-media-tools.sh
+./yt-dlp-media-tools.sh
+```
+
+Needs `yt-dlp` and `ffmpeg` on your PATH.
 
 ---
 

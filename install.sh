@@ -2,14 +2,7 @@
 
 set -euo pipefail
 
-VERSION="1.2.2"
-SCRIPT_NAME="yt-dlp-media-tools.sh"
-REQUIRED_COMMANDS=(yt-dlp ffmpeg)
-
-REPO_URL="${YTMT_REPO_URL:-https://github.com/corado-bogos/yt-dlp-media-tools.git}"
-INSTALL_DIR="${YTMT_INSTALL_DIR:-$HOME/.local/share/yt-dlp-media-tools}"
-BIN_DIR="${YTMT_BIN_DIR:-$HOME/.local/bin}"
-COMMAND_NAME="ytmt"
+VERSION="1.3.0"
 STEP_NUMBER=0
 HOMEBREW_READY=0
 PROFILE_UPDATED=0
@@ -67,10 +60,6 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
-command_runs() {
-  "$@" >/dev/null 2>&1
-}
-
 prompt_yes_no() {
   local prompt="$1"
   local answer
@@ -97,21 +86,6 @@ prompt_yes_no() {
       return 1
       ;;
   esac
-}
-
-missing_commands() {
-  local missing=()
-  local command_name
-
-  for command_name in "${REQUIRED_COMMANDS[@]}"; do
-    if ! command_exists "$command_name"; then
-      missing+=("$command_name")
-    fi
-  done
-
-  if [[ "${#missing[@]}" -gt 0 ]]; then
-    printf "%s\n" "${missing[@]}"
-  fi
 }
 
 # ----------------------------------------------------------------------------
@@ -289,7 +263,7 @@ ensure_homebrew() {
   fi
 
   warn "Homebrew was not found."
-  note "Homebrew is needed on macOS to install git, yt-dlp, and ffmpeg."
+  note "Homebrew is needed on macOS to install ytmt and its dependencies."
 
   if prompt_yes_no "Install Homebrew now?"; then
     install_homebrew
@@ -300,46 +274,18 @@ ensure_homebrew() {
   fi
 }
 
-install_with_homebrew() {
-  local packages=("$@")
+install_ytmt() {
   local brew_path
 
-  ensure_homebrew
-
+  step "Installing ytmt via Homebrew"
   brew_path="$(command -v brew)"
-  info "Installing missing packages with Homebrew: ${packages[*]}"
-  "$brew_path" install "${packages[@]}"
-}
 
-install_packages() {
-  local packages=("$@")
+  "$brew_path" trust corado-bogos/tap >/dev/null 2>&1 || true
 
-  if [[ "${#packages[@]}" -eq 0 ]]; then
-    return 0
-  fi
+  info "Running: brew install corado-bogos/tap/ytmt"
+  "$brew_path" install corado-bogos/tap/ytmt
 
-  install_with_homebrew "${packages[@]}"
-}
-
-confirm_install_packages() {
-  local packages
-  packages="$*"
-
-  if ! prompt_yes_no "Install missing packages now? ($packages)"; then
-    fail "Cannot continue without required packages: $packages"
-  fi
-}
-
-make_scripts_executable() {
-  local script
-
-  for script in ./*.sh; do
-    if [[ -f "$script" ]]; then
-      chmod +x "$script"
-    fi
-  done
-
-  ok "Shell scripts are executable"
+  ok "ytmt is installed"
 }
 
 print_header() {
@@ -347,137 +293,6 @@ print_header() {
   printf "%s%s==> yt-dlp-media-tools installer (v%s)%s\n" "$BOLD" "$BLUE" "$VERSION" "$RESET"
   printf "%s\n" "    Safe one-line setup for macOS"
   printf "%s\n" "    -----------------------------"
-}
-
-# ----------------------------------------------------------------------------
-# Bootstrap mode
-#
-# This lets the installer be run directly via:
-#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
-#
-# without the user having to manually clone the repository first. If the
-# script is not being run from inside an existing checkout (SCRIPT_NAME is
-# missing in the current directory), it clones/updates the project into
-# INSTALL_DIR and re-runs itself from there.
-# ----------------------------------------------------------------------------
-bootstrap_and_install() {
-  step "Preparing one-line install"
-  ok "Running in one-line install mode"
-  info "Install location: $INSTALL_DIR"
-
-  if ! command_exists git || ! command_runs git --version; then
-    warn "git is required to download the project and is not installed or not working."
-    confirm_install_packages git
-    install_packages git
-  fi
-
-  if ! command_runs git --version; then
-    fail "git is installed but did not run correctly. Install/fix git, then run this installer again."
-  fi
-
-  if [[ -d "$INSTALL_DIR/.git" ]]; then
-    info "Existing installation found, updating to the latest version..."
-    if ! git -C "$INSTALL_DIR" pull --ff-only; then
-      warn "The existing install could not be updated safely."
-      note "This usually means there are local edits or the branch cannot fast-forward."
-      note "Inspect it with:"
-      printf "\n  cd %s\n  git status\n\n" "$INSTALL_DIR"
-      note "If you want to keep local edits, commit or stash them first."
-      note "If you do not need them, remove the install folder and run this installer again."
-      fail "Update stopped before changing your local files."
-    fi
-  elif [[ -e "$INSTALL_DIR" ]]; then
-    fail "$INSTALL_DIR already exists and is not a git repository. Remove it or set YTMT_INSTALL_DIR to a different path, then try again."
-  else
-    info "Cloning repository into $INSTALL_DIR"
-    mkdir -p "$(dirname "$INSTALL_DIR")"
-    git clone --depth 1 "$REPO_URL" "$INSTALL_DIR"
-  fi
-
-  cd "$INSTALL_DIR"
-  exec bash "./install.sh"
-}
-
-# ----------------------------------------------------------------------------
-# Local install (runs once we are inside the project directory, either
-# because the user cloned it manually or because bootstrap_and_install
-# cloned it and re-exec'd this script)
-# ----------------------------------------------------------------------------
-setup_global_command() {
-  local target="$PWD/$SCRIPT_NAME"
-
-  mkdir -p "$BIN_DIR"
-  ln -sf "$target" "$BIN_DIR/$COMMAND_NAME"
-  ok "Created command '$COMMAND_NAME' -> $target"
-
-  if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
-    export PATH="$BIN_DIR:$PATH"
-    persist_line "export PATH=\"$BIN_DIR:\$PATH\""
-  fi
-}
-
-verify_required_tools() {
-  local yt_dlp_version
-
-  if ! yt_dlp_version="$(yt-dlp --version 2>/dev/null)"; then
-    fail "yt-dlp is installed but did not run correctly. Try updating or reinstalling it, then run this installer again."
-  fi
-
-  if ! ffmpeg -version >/dev/null 2>&1; then
-    fail "ffmpeg is installed but did not run correctly. Try updating or reinstalling it, then run this installer again."
-  fi
-
-  ok "Verified yt-dlp ($yt_dlp_version) and ffmpeg"
-}
-
-run_local_install() {
-  local missing=()
-
-  step "Preparing local files"
-  make_scripts_executable
-
-  step "Checking required tools"
-  while IFS= read -r item; do
-    if [[ -n "$item" ]]; then
-      missing+=("$item")
-    fi
-  done < <(missing_commands)
-
-  if [[ "${#missing[@]}" -eq 0 ]]; then
-    ok "yt-dlp and ffmpeg are already installed"
-  else
-    warn "Missing packages: ${missing[*]}"
-    confirm_install_packages "${missing[@]}"
-    install_packages "${missing[@]}"
-  fi
-
-  while IFS= read -r item; do
-    if [[ -n "$item" ]]; then
-      fail "$item is still missing after installation. Please install it manually."
-    fi
-  done < <(missing_commands)
-
-  verify_required_tools
-
-  step "Creating the global command"
-  setup_global_command
-
-  printf "\n"
-  log "installation complete"
-  printf "%s==> Done%s\n" "$BOLD$GREEN" "$RESET"
-  ok "Installation complete"
-  printf "Start the tool:\n\n"
-  printf "  %s\n\n" "$COMMAND_NAME"
-  printf "To update yt-dlp: brew upgrade yt-dlp\n\n"
-
-  note "ytmt uses yt-dlp to download media. You are responsible for respecting"
-  note "copyright and the terms of the source platform. See LICENSE.md for details."
-  printf "\n"
-
-  if [[ "${PROFILE_UPDATED:-0}" -eq 1 ]] && [[ -t 0 ]] && [[ -t 1 ]] && [[ "${YTMT_NO_SHELL_RELOAD:-0}" != "1" ]]; then
-    info "Reloading your shell so '$COMMAND_NAME' works right away..."
-    exec "${SHELL:-/bin/bash}" -l
-  fi
 }
 
 main() {
@@ -498,12 +313,22 @@ main() {
 
   ensure_macos_command_line_tools
   ensure_homebrew
-  log "command line tools + Homebrew ready"
+  install_ytmt
+  log "installation complete"
 
-  if [[ -f "$SCRIPT_NAME" ]]; then
-    run_local_install
-  else
-    bootstrap_and_install
+  printf "\n"
+  printf "%s==> Done%s\n" "$BOLD$GREEN" "$RESET"
+  ok "Installation complete"
+  printf "Start the tool:\n\n"
+  printf "  ytmt\n\n"
+
+  note "ytmt uses yt-dlp to download media. You are responsible for respecting"
+  note "copyright and the terms of the source platform. See LICENSE.md for details."
+  printf "\n"
+
+  if [[ "${PROFILE_UPDATED:-0}" -eq 1 ]] && [[ -t 0 ]] && [[ -t 1 ]] && [[ "${YTMT_NO_SHELL_RELOAD:-0}" != "1" ]]; then
+    info "Reloading your shell so 'ytmt' works right away..."
+    exec "${SHELL:-/bin/bash}" -l
   fi
 }
 

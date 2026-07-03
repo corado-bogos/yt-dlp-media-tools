@@ -4,7 +4,7 @@ A beginner-friendly macOS terminal tool for downloading videos and audio from Yo
 
 [![Shell](https://img.shields.io/badge/shell-bash-blue)](https://www.gnu.org/software/bash/)
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](#install)
-[![Version](https://img.shields.io/badge/version-v1.2.2-brightgreen)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v1.3.0-brightgreen)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-Personal%20Use-green)](LICENSE.md)
 
 > **macOS only.** Not tested or supported on Linux, Windows, or WSL.
@@ -42,19 +42,15 @@ See [LICENSE.md](LICENSE.md) and [SECURITY.md](SECURITY.md) for the full terms.
 
 ## Install
 
-### Homebrew (recommended)
-
-If you already have [Homebrew](https://brew.sh):
-
 ```bash
 brew install corado-bogos/tap/ytmt
 ```
 
 This pulls in `yt-dlp` and `ffmpeg` automatically. The first time, Homebrew asks you to trust the tap — accept the prompt, or run `brew trust corado-bogos/tap` once.
 
-### One-line installer
+### No Homebrew?
 
-No Homebrew yet? This handles everything (Apple Command Line Tools, Homebrew, `yt-dlp`, and `ffmpeg`), asking before each step:
+This bootstraps everything (Apple Command Line Tools, Homebrew, then `ytmt` itself), asking before each step:
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
@@ -111,33 +107,17 @@ To reset: delete or move `archive.txt`.
 
 ## Update
 
-**Homebrew:**
-
 ```bash
 brew upgrade ytmt
-```
-
-**One-line installer:** re-run the install command at any time:
-
-```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
 ```
 
 ---
 
 ## Uninstall
 
-**Homebrew:**
-
 ```bash
 brew uninstall ytmt
 brew untap corado-bogos/tap
-```
-
-**One-line / manual install:**
-
-```bash
-~/.local/share/yt-dlp-media-tools/uninstall.sh
 ```
 
 ---
@@ -148,8 +128,6 @@ brew untap corado-bogos/tap
 |-----------------|---------|------------------------------------------------------|
 | `YTMT_KEEP_LOG` | `0`     | Set to `1` to save the full yt-dlp log to the download folder |
 | `YTMT_ASSUME_YES` | `0`   | Set to `1` to auto-confirm installer prompts         |
-| `YTMT_INSTALL_DIR` | `~/.local/share/yt-dlp-media-tools` | Installer: custom install directory |
-| `YTMT_BIN_DIR` | `~/.local/bin` | Installer: custom directory for the `ytmt` symlink |
 
 ---
 

@@ -26,17 +26,21 @@ A popup appeared from Apple. Switch to it, click **Install**, wait for it to fin
 
 **`Missing command: yt-dlp`**
 
-Run `./install.sh` and confirm when it asks to install missing packages. Manual fix:
-
 ```bash
 brew install yt-dlp
+```
+
+Or reinstall `ytmt` to pull in its dependencies again:
+
+```bash
+brew reinstall ytmt
 ```
 
 ---
 
 **`ffmpeg was not found`**
 
-All modes require `ffmpeg`. Run `./install.sh` or:
+All modes require `ffmpeg`.
 
 ```bash
 brew install ffmpeg
@@ -61,13 +65,13 @@ For Intel Mac, replace `/opt/homebrew` with `/usr/local`.
 
 **`ytmt: command not found`**
 
-The installer adds `~/.local/bin` to your PATH. If it's still missing, open a new Terminal window or run:
+`ytmt` is installed by Homebrew, so it needs Homebrew's `shellenv` on your PATH. Open a new Terminal window, or run:
 
 ```bash
-export PATH="$HOME/.local/bin:$PATH"
+eval "$(brew shellenv)"
 ```
 
-To make it permanent, add that line to `~/.zprofile`, then re-run `./install.sh`.
+To make it permanent, add that line to `~/.zprofile` (Apple Silicon default location: `/opt/homebrew/bin/brew`; Intel: `/usr/local/bin/brew`).
 
 ---
 
@@ -133,7 +137,7 @@ Alternatively, use Chrome, Firefox, Brave, or Edge.
 
 **Thumbnails not embedded**
 
-Verify `ffmpeg` is installed: `ffmpeg -version`. If missing, run `./install.sh`.
+Verify `ffmpeg` is installed: `ffmpeg -version`. If missing: `brew install ffmpeg`.
 
 WEBM saves thumbnails as separate `.jpg` files. FLAC does not include thumbnails.
 
@@ -153,21 +157,8 @@ The log is saved as `ytmt-last-run.log` in your download folder.
 
 **Update the tool**
 
-Re-run the install command:
-
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
-```
-
----
-
-**Existing install will not update**
-
-The installer uses `git pull --ff-only`. If your local folder has uncommitted changes or a non-standard git state, remove it and reinstall:
-
-```bash
-rm -rf ~/.local/share/yt-dlp-media-tools
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
+brew upgrade ytmt
 ```
 
 ---
@@ -175,10 +166,15 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-medi
 **Uninstall**
 
 ```bash
-~/.local/share/yt-dlp-media-tools/uninstall.sh
+brew uninstall ytmt
+brew untap corado-bogos/tap
 ```
 
-Or manually:
+---
+
+**Removing an old (pre-1.3.0) install**
+
+Versions before 1.3.0 cloned the project into `~/.local/share` and symlinked `ytmt` into `~/.local/bin`. If you still have one of those installs, remove it manually:
 
 ```bash
 rm -rf ~/.local/share/yt-dlp-media-tools

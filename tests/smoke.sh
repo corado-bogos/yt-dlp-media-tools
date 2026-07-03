@@ -11,7 +11,7 @@ ok()  { printf "  PASS  %s\n" "$1"; pass=$((pass + 1)); }
 bad() { printf "  FAIL  %s\n" "$1"; fail=$((fail + 1)); }
 
 # 1) Scripts have valid syntax
-for f in yt-dlp-media-tools.sh install.sh uninstall.sh; do
+for f in yt-dlp-media-tools.sh install.sh; do
   if bash -n "$f" 2>/dev/null; then ok "syntax: $f"; else bad "syntax: $f"; fi
 done
 

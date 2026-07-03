@@ -4,6 +4,22 @@ All notable changes to `yt-dlp-media-tools` are documented here.
 
 ---
 
+## [v1.3.0] — 2026-07-04
+
+### Changed
+
+- **`install.sh` is now a thin bootstrap** — instead of cloning the repo into `~/.local/share` and symlinking `ytmt` into `~/.local/bin`, it checks for Apple Command Line Tools and Homebrew, then runs `brew install corado-bogos/tap/ytmt`. Homebrew is now the only install target; `yt-dlp` and `ffmpeg` come from the formula's dependencies.
+- **Update / Uninstall are single `brew` commands** — `brew upgrade ytmt` and `brew uninstall ytmt` (+ `brew untap corado-bogos/tap`).
+- Docs (README, TROUBLESHOOTING, CONTRIBUTING) updated to match: one install command with a no-Homebrew fallback, no more `~/.local`/`git pull` references.
+
+### Removed
+
+- **`uninstall.sh`** — obsolete now that uninstall is `brew uninstall ytmt`. Pre-1.3.0 installs can still be removed manually; see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+- **`YTMT_INSTALL_DIR`** / **`YTMT_BIN_DIR`** — unused by the new installer.
+- Version bumped to `v1.3.0`.
+
+---
+
 ## [v1.2.2] — 2026-07-03
 
 ### Added
