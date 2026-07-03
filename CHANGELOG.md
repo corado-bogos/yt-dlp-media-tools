@@ -4,6 +4,21 @@ All notable changes to `yt-dlp-media-tools` are documented here.
 
 ---
 
+## [v1.2.2] — 2026-07-03
+
+### Added
+
+- **Homebrew install** — the tool can now be installed via a Homebrew tap: `brew install corado-bogos/tap/ytmt` (installs `yt-dlp` and `ffmpeg` automatically). README documents this as the recommended method, alongside the existing one-line installer.
+- **`## Legal` section in the README** — a short, visible notice: the tool is legal software, the user is responsible for downloaded content and for respecting copyright and platform terms, and it is not affiliated with YouTube, Google, or any supported platform.
+- **One-time legal notice at install time** — `install.sh` now prints a copyright-responsibility reminder at the end of installation; the Homebrew formula shows the same notice via `caveats`.
+
+### Changed
+
+- **Liability disclaimer consolidated** — the disclaimer text was duplicated in `LICENSE.md` and `SECURITY.md`. `LICENSE.md` is now the single canonical source; `SECURITY.md`'s `## Disclaimer` points to it. The `Unsupported Use Cases` section in `SECURITY.md` is unchanged.
+- Version bumped to `v1.2.2`.
+
+---
+
 ## [v1.2.1] — 2026-07-02
 
 ### Fixed

@@ -4,22 +4,42 @@ A beginner-friendly macOS terminal tool for downloading videos and audio from Yo
 
 [![Shell](https://img.shields.io/badge/shell-bash-blue)](https://www.gnu.org/software/bash/)
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](#install)
-[![Version](https://img.shields.io/badge/version-v1.2.1-brightgreen)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v1.2.2-brightgreen)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-Personal%20Use-green)](LICENSE.md)
 
 > **macOS only.** Not tested or supported on Linux, Windows, or WSL.
 
 ---
 
+## Legal
+
+`yt-dlp-media-tools` is a personal, educational wrapper around [yt-dlp](https://github.com/yt-dlp/yt-dlp) — legal software. **You are responsible** for what you download and for complying with copyright law and the terms of service of the source platform.
+
+Not affiliated with YouTube, Google, or any supported platform.
+
+See [LICENSE.md](LICENSE.md) and [SECURITY.md](SECURITY.md) for the full terms.
+
+---
+
 ## Install
 
-Open Terminal and run:
+### Homebrew (recommended)
+
+If you already have [Homebrew](https://brew.sh):
+
+```bash
+brew install corado-bogos/tap/ytmt
+```
+
+This pulls in `yt-dlp` and `ffmpeg` automatically. The first time, Homebrew asks you to trust the tap — accept the prompt, or run `brew trust corado-bogos/tap` once.
+
+### One-line installer
+
+No Homebrew yet? This handles everything (Apple Command Line Tools, Homebrew, `yt-dlp`, and `ffmpeg`), asking before each step:
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
 ```
-
-The installer handles everything: Apple Command Line Tools, Homebrew, `yt-dlp`, and `ffmpeg`. Each step asks before installing anything.
 
 Then start from any terminal window:
 
@@ -87,7 +107,13 @@ To reset: delete or move `archive.txt`.
 
 ## Update
 
-Re-run the install command at any time:
+**Homebrew:**
+
+```bash
+brew upgrade ytmt
+```
+
+**One-line installer:** re-run the install command at any time:
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
@@ -96,6 +122,15 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-medi
 ---
 
 ## Uninstall
+
+**Homebrew:**
+
+```bash
+brew uninstall ytmt
+brew untap corado-bogos/tap
+```
+
+**One-line / manual install:**
 
 ```bash
 ~/.local/share/yt-dlp-media-tools/uninstall.sh

@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-VERSION="1.2.1"
+VERSION="1.2.2"
 SCRIPT_NAME="yt-dlp-media-tools.sh"
 REQUIRED_COMMANDS=(yt-dlp ffmpeg)
 
@@ -469,6 +469,10 @@ run_local_install() {
   printf "Start the tool:\n\n"
   printf "  %s\n\n" "$COMMAND_NAME"
   printf "To update yt-dlp: brew upgrade yt-dlp\n\n"
+
+  note "ytmt uses yt-dlp to download media. You are responsible for respecting"
+  note "copyright and the terms of the source platform. See LICENSE.md for details."
+  printf "\n"
 
   if [[ "${PROFILE_UPDATED:-0}" -eq 1 ]] && [[ -t 0 ]] && [[ -t 1 ]] && [[ "${YTMT_NO_SHELL_RELOAD:-0}" != "1" ]]; then
     info "Reloading your shell so '$COMMAND_NAME' works right away..."

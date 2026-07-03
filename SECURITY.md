@@ -96,9 +96,4 @@ Users are advised to keep their local copy updated.
 
 ## Disclaimer
 
-This project is provided "as is" without any warranty.
-
-The maintainers are not responsible for:
-- misuse of the tool
-- user-provided content
-- external dependency behavior
+See [LICENSE.md](LICENSE.md) for the full liability disclaimer.
