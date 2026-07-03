@@ -21,6 +21,25 @@ See [LICENSE.md](LICENSE.md) and [SECURITY.md](SECURITY.md) for the full terms.
 
 ---
 
+## Features
+
+- **Guided wizard** — four steps (save location → URL → format → cookies), with back/exit at every step. No flags to memorize.
+- **Video & audio** — download as MP4, WEBM, MP3, M4A, or FLAC (see [Formats](#formats)).
+- **Playlists** — grabs whole playlists, numbering items with a zero-padded index.
+- **Thumbnails & metadata** — embedded automatically where the format supports it.
+- **Archive tracking** — re-runs skip already-downloaded items (optional; toggle at startup).
+- **Browser cookies** — optional, for age-restricted or members-only content (Chrome, Firefox, Safari, Edge, Brave).
+- **Clean progress** — a simple progress bar; yt-dlp's internal log noise is filtered out.
+
+---
+
+## Requirements
+
+- **macOS** — Apple Silicon or Intel. Not supported on Linux, Windows, or WSL.
+- **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** and **[ffmpeg](https://ffmpeg.org)** — installed automatically by either install method below; no manual setup needed.
+
+---
+
 ## Install
 
 ### Homebrew (recommended)
@@ -47,22 +66,7 @@ Then start from any terminal window:
 ytmt
 ```
 
-**Manual install:**
-
-```bash
-git clone https://github.com/corado-bogos/yt-dlp-media-tools
-cd yt-dlp-media-tools
-chmod +x install.sh
-./install.sh
-```
-
-**Unattended install:**
-
-```bash
-YTMT_ASSUME_YES=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/corado-bogos/yt-dlp-media-tools/main/install.sh)"
-```
-
-> Piping `curl | bash` runs a remote script on your machine. Read [install.sh](install.sh) first if you prefer.
+> Piping `curl | bash` runs a remote script on your machine. Read [install.sh](install.sh) first if you prefer. For unattended/scripted installs, prefix it with `YTMT_ASSUME_YES=1` (see [Options](#options)).
 
 ---
 
