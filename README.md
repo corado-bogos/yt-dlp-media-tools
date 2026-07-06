@@ -1,6 +1,12 @@
+<p align="center">
+  <img src="assets/brand/readme-hero.png" alt="ytmt — yt-dlp media tools: download video &amp; audio, the simple way" width="100%">
+</p>
+
 # yt-dlp-media-tools
 
 A beginner-friendly macOS terminal tool for downloading videos and audio from YouTube and other platforms. Wraps [yt-dlp](https://github.com/yt-dlp/yt-dlp) in a simple step-by-step interface — no commands to memorize.
+
+> **Branding:** logo, social card, X/Twitter header, favicon and more live in [`assets/brand/`](assets/brand/) — all generated from HTML so the design stays consistent.
 
 [![Shell](https://img.shields.io/badge/shell-bash-blue)](https://www.gnu.org/software/bash/)
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](#install)
