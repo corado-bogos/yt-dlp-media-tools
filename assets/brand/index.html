@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ytmt — Brand Kit</title>
+<link rel="icon" href="mark.svg">
+<link rel="stylesheet" href="brand.css">
+<style>
+  html,body{margin:0}
+  body{background:var(--paper);color:var(--ink-2);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:72px 28px 120px}
+  section{margin-top:72px}
+  h1,h2,h3{font-family:var(--serif);color:var(--ink);font-weight:600;letter-spacing:-.01em}
+  .eyebrow{font-family:var(--sans);font-weight:600;text-transform:uppercase;letter-spacing:.24em;color:var(--clay);font-size:12px}
+  h2{font-size:30px;margin:.4em 0 .2em}
+  .lead{color:var(--muted);font-size:17px;max-width:60ch;line-height:1.6}
+  .card{background:var(--paper-deep);border:1px solid var(--line);border-radius:22px;padding:34px;display:grid;place-items:center;min-height:190px;position:relative;overflow:hidden}
+  .card.check{background-image:
+     linear-gradient(45deg,#e7ddca 25%,transparent 25%),linear-gradient(-45deg,#e7ddca 25%,transparent 25%),
+     linear-gradient(45deg,transparent 75%,#e7ddca 75%),linear-gradient(-45deg,transparent 75%,#e7ddca 75%);
+     background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0;background-color:var(--paper)}
+  .grid{display:grid;gap:20px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:720px){.g2,.g3{grid-template-columns:1fr}}
+  .swatch{border-radius:18px;border:1px solid rgba(0,0,0,.06);height:120px;display:flex;flex-direction:column;justify-content:flex-end;padding:16px;font-family:var(--mono);font-size:12.5px}
+  .swatch b{display:block;font-weight:600;font-size:13.5px;margin-bottom:2px}
+  .label{font-family:var(--sans);font-size:12.5px;color:var(--muted);text-align:center;margin-top:12px;font-weight:500}
+  img.shot{display:block;width:100%;border-radius:16px;border:1px solid var(--line)}
+  .type-row{display:flex;align-items:baseline;gap:22px;padding:16px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .type-row .meta{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:150px}
+  .rules{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+  @media(max-width:720px){.rules{grid-template-columns:1fr}}
+  .rule{background:var(--paper-deep);border:1px solid var(--line);border-radius:16px;padding:18px 20px;font-size:15px;line-height:1.5}
+  .rule .k{font-weight:700}
+  .yes .k{color:#4a7a4a}.no .k{color:var(--clay-deep)}
+  .files{width:100%;border-collapse:collapse;font-size:14.5px}
+  .files th,.files td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line)}
+  .files th{font-family:var(--sans);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:11.5px}
+  .files td:first-child{font-family:var(--mono);font-size:13px;color:var(--ink)}
+  footer{margin-top:90px;padding-top:26px;border-top:1px solid var(--line);color:var(--muted);font-size:13.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="lockup" style="gap:26px;align-items:center">
+    <span class="mark" style="width:104px;height:104px"></span>
+    <div class="stack" style="gap:12px">
+      <div class="wordmark" style="font-size:66px;line-height:1">ytmt</div>
+      <div class="descriptor" style="font-size:13px">yt-dlp&nbsp;&middot;&nbsp;media tools</div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:30px;font-size:19px">
+    The visual identity for <b style="color:var(--ink)">ytmt</b> — a friendly macOS wrapper around
+    <code style="font-family:var(--mono);color:var(--clay-deep)">yt-dlp</code>. Warm paper, terracotta
+    clay, and an editorial serif. One system, used everywhere.
+  </p>
+
+  <!-- LOGO -->
+  <section>
+    <div class="eyebrow">01 — Logo</div>
+    <h2>The mark &amp; lockups</h2>
+    <p class="lead">The mark is a downward play-glyph on a rounded clay tile — “press play, save it.” Legible from favicon to billboard.</p>
+    <div class="grid g3" style="margin-top:26px">
+      <div><div class="card check"><span class="mark" style="width:150px;height:150px"></span></div><div class="label">Mark · full color</div></div>
+      <div><div class="card"><span class="mark is-mono" style="width:150px;height:150px;color:var(--ink)"></span></div><div class="label">Mark · monochrome ink</div></div>
+      <div><div class="card" style="background:var(--clay)"><span class="mark is-mono-cream" style="width:150px;height:150px"></span></div><div class="label">Mark · reversed on clay</div></div>
+    </div>
+    <div class="grid g2" style="margin-top:20px">
+      <div><div class="card check"><span class="mark" style="width:96px;height:96px;margin-right:24px"></span><div class="stack" style="gap:12px"><div class="wordmark" style="font-size:58px;line-height:1">ytmt</div><div class="descriptor" style="font-size:12px">yt-dlp&nbsp;&middot;&nbsp;media tools</div></div></div><div class="label">Horizontal lockup</div></div>
+      <div><div class="card on-dark" style="background:#201d16"><span class="mark" style="width:96px;height:96px;margin-right:24px"></span><div class="stack" style="gap:12px"><div class="wordmark" style="font-size:58px;line-height:1">ytmt</div><div class="descriptor" style="font-size:12px">yt-dlp&nbsp;&middot;&nbsp;media tools</div></div></div><div class="label">Horizontal · on dark</div></div>
+    </div>
+  </section>
+
+  <!-- COLOR -->
+  <section>
+    <div class="eyebrow">02 — Color</div>
+    <h2>Paper &amp; clay</h2>
+    <p class="lead">A warm, low-glare neutral base carries a single confident terracotta accent. Ink is warm near-black, never pure #000.</p>
+    <div class="grid g3" style="margin-top:26px">
+      <div class="swatch" style="background:#F4F0E7;color:#6E6656"><b>Paper</b>#F4F0E7</div>
+      <div class="swatch" style="background:#ECE3D2;color:#6E6656"><b>Paper deep</b>#ECE3D2</div>
+      <div class="swatch" style="background:#E4D8C1;color:#6E6656"><b>Sand</b>#E4D8C1</div>
+      <div class="swatch" style="background:#C15F3C;color:#F7F1E6"><b>Clay · primary</b>#C15F3C</div>
+      <div class="swatch" style="background:#D98A57;color:#3B352B"><b>Clay light</b>#D98A57</div>
+      <div class="swatch" style="background:#A24B2C;color:#F7F1E6"><b>Clay deep</b>#A24B2C</div>
+      <div class="swatch" style="background:#221F18;color:#EAE3D5"><b>Ink</b>#221F18</div>
+      <div class="swatch" style="background:#3B352B;color:#EAE3D5"><b>Ink 2</b>#3B352B</div>
+      <div class="swatch" style="background:#6E6656;color:#F7F1E6"><b>Muted</b>#6E6656</div>
+    </div>
+  </section>
+
+  <!-- TYPE -->
+  <section>
+    <div class="eyebrow">03 — Type</div>
+    <h2>Fraunces &amp; Inter</h2>
+    <p class="lead">Fraunces (a warm display serif) for headlines and the wordmark; Inter for UI and labels; JetBrains Mono for commands. Fonts are embedded in <code style="font-family:var(--mono)">brand.css</code>.</p>
+    <div style="margin-top:24px">
+      <div class="type-row"><span class="meta">Fraunces · display</span><span style="font-family:var(--serif);font-weight:600;font-size:44px;color:var(--ink)">Download it the simple way</span></div>
+      <div class="type-row"><span class="meta">Fraunces · italic</span><span style="font-family:var(--serif);font-style:italic;font-size:36px;color:var(--clay)">simply, beautifully</span></div>
+      <div class="type-row"><span class="meta">Inter · body</span><span style="font-family:var(--sans);font-size:19px;color:var(--ink-2)">Clean, legible interface text for labels and captions.</span></div>
+      <div class="type-row"><span class="meta">Inter · overline</span><span class="descriptor" style="font-size:14px">yt-dlp&nbsp;&middot;&nbsp;media tools</span></div>
+      <div class="type-row"><span class="meta">JetBrains Mono</span><span style="font-family:var(--mono);font-size:18px;color:var(--ink-2)"><span style="color:var(--clay)">$</span> brew install corado-bogos/tap/ytmt</span></div>
+    </div>
+  </section>
+
+  <!-- ASSETS / PREVIEWS -->
+  <section>
+    <div class="eyebrow">04 — Assets</div>
+    <h2>Ready-made images</h2>
+    <p class="lead">Every image below is generated from an HTML source in this folder, so the design never drifts. Re-render anytime with <code style="font-family:var(--mono)">render.sh</code>.</p>
+    <div class="grid" style="margin-top:26px;gap:26px">
+      <div><img class="shot" src="social-preview.png" alt="GitHub social preview"><div class="label">GitHub social preview · 1280×640</div></div>
+      <div><img class="shot" src="x-banner.png" alt="X / Twitter header"><div class="label">X / Twitter header · 1500×500</div></div>
+      <div class="grid g2" style="gap:26px">
+        <div><img class="shot" src="og-card.png" alt="Open Graph card"><div class="label">Open Graph card · 1200×630</div></div>
+        <div><img class="shot" src="readme-hero.png" alt="README hero"><div class="label">README hero · 1280×340</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- USAGE -->
+  <section>
+    <div class="eyebrow">05 — Usage</div>
+    <h2>Keep it consistent</h2>
+    <div class="rules" style="margin-top:24px">
+      <div class="rule yes"><span class="k">Do</span> — give the mark clear space equal to half its width.</div>
+      <div class="rule no"><span class="k">Don't</span> — recolor the mark outside the palette or add shadows/gradients of your own.</div>
+      <div class="rule yes"><span class="k">Do</span> — use the reversed mark on clay or dark backgrounds.</div>
+      <div class="rule no"><span class="k">Don't</span> — stretch, rotate, or outline the wordmark.</div>
+      <div class="rule yes"><span class="k">Do</span> — pair one clay accent with plenty of paper.</div>
+      <div class="rule no"><span class="k">Don't</span> — set the wordmark in any font other than Fraunces.</div>
+    </div>
+  </section>
+
+  <!-- FILES -->
+  <section>
+    <div class="eyebrow">06 — Files</div>
+    <h2>What's in this folder</h2>
+    <table class="files" style="margin-top:20px">
+      <tr><th>File</th><th>Size</th><th>Use</th></tr>
+      <tr><td>mark.svg</td><td>vector</td><td>Scalable logomark — favicons, inline README badges</td></tr>
+      <tr><td>logomark.png</td><td>512²</td><td>App / avatar mark, transparent</td></tr>
+      <tr><td>logo-horizontal.png</td><td>1000×300</td><td>Primary lockup (light &amp; -dark variant)</td></tr>
+      <tr><td>logo-stacked.png</td><td>600×640</td><td>Vertical lockup</td></tr>
+      <tr><td>avatar-clay.png</td><td>512²</td><td>GitHub / social avatar</td></tr>
+      <tr><td>favicon.png / -64 / -32</td><td>256/64/32</td><td>Browser tab icon</td></tr>
+      <tr><td>social-preview.png</td><td>1280×640</td><td>GitHub → Settings → Social preview</td></tr>
+      <tr><td>og-card.png</td><td>1200×630</td><td>Open Graph / link unfurls</td></tr>
+      <tr><td>x-banner.png</td><td>1500×500</td><td>X / Twitter profile header</td></tr>
+      <tr><td>readme-hero.png</td><td>1280×340</td><td>Banner at the top of README</td></tr>
+      <tr><td>brand.css</td><td>—</td><td>Single source of truth: fonts, tokens, mark</td></tr>
+    </table>
+  </section>
+
+  <footer>
+    <span>ytmt brand kit · yt-dlp media tools</span>
+    <span>github.com/corado-bogos/yt-dlp-media-tools</span>
+  </footer>
+</div>
+</body>
+</html>
