@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/brand/readme-hero.png" alt="ytmt — yt-dlp media tools: download video &amp; audio, the simple way" width="100%">
+  <img src="assets/brand/og-card.png" alt="ytmt — yt-dlp media tools: download video &amp; audio, the simple way" width="100%">
 </p>
 
 # yt-dlp-media-tools
